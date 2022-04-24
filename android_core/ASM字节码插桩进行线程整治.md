@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0357ed9ee08d4a5d92af66a72b002169~tplv-k3u1fbpfcp-watermark.image)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -46,8 +46,7 @@
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2021/12/18 17:57
+ * @Author: leavesCZY
  * @Desc:
  * @公众号：字节数组
  */
@@ -79,10 +78,9 @@ class OptimizedThread(runnable: Runnable?, name: String?, className: String) :
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2021/12/16 15:11
+ * @Author: leavesCZY
  * @Desc:
- * @Github：https://github.com/leavesC
+ * @公众号：字节数组
  */
 class OptimizedThreadTransform(private val config: OptimizedThreadConfig) : BaseTransform() {
 
@@ -228,9 +226,9 @@ JDK 中的源码我们是没法进行 hook 的，而如果要在字节码层面�
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2021/12/16 15:58
+ * @Author: leavesCZY
  * @Desc:
+ * @公众号：字节数组
  */
 object OptimizedExecutors {
 
@@ -312,10 +310,9 @@ object OptimizedExecutors {
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2021/12/16 15:11
+ * @Author: leavesCZY
  * @Desc:
- * @Github：https://github.com/leavesC
+ * @公众号：字节数组
  */
 class OptimizedThreadTransform(private val config: OptimizedThreadConfig) : BaseTransform() {
 
@@ -399,4 +396,4 @@ class OptimizedThreadTransform(private val config: OptimizedThreadConfig) : Base
 
 # 四、源码
 
-最后也给出完整的源码：[ASM_Transform](https://github.com/leavesC/ASM_Transform)
+最后也给出完整的源码：[ASM_Transform](https://github.com/leavesCZY/ASM_Transform)

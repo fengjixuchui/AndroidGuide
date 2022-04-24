@@ -1,24 +1,8 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
 > 对于 Android Developer 来说，很多开源库都是属于**开发必备**的知识点，从使用方式到实现原理再到源码解析，这些都需要我们有一定程度的了解和运用能力。所以我打算来写一系列关于开源库**源码解析**和**实战演练**的文章，初定的目标是 **EventBus、ARouter、LeakCanary、Retrofit、Glide、OkHttp、Coil** 等七个知名开源库，希望对你有所帮助 🤣🤣
-
-系列文章导航：
-
-- [三方库源码笔记（1）-EventBus 源码详解](https://juejin.cn/post/6881265680465788936)
-- [三方库源码笔记（2）-EventBus 自己实现一个](https://juejin.cn/post/6881808026647396366)
-- [三方库源码笔记（3）-ARouter 源码详解](https://juejin.cn/post/6882553066285957134)
-- [三方库源码笔记（4）-ARouter 自己实现一个](https://juejin.cn/post/6883105868326862856)
-- [三方库源码笔记（5）-LeakCanary 源码详解](https://juejin.cn/post/6884225131015569421)
-- [三方库源码笔记（6）-LeakCanary 扩展阅读](https://juejin.cn/post/6884526739646185479)
-- [三方库源码笔记（7）-Retrofit 源码详解](https://juejin.cn/post/6886121327845965838)
-- [三方库源码笔记（8）-Retrofit 与 LiveData 的结合使用](https://juejin.cn/post/6887408273213882375)
-- [三方库源码笔记（9）-Glide 源码详解](https://juejin.cn/post/6891307560557608967)
-- [三方库源码笔记（10）-Glide 你可能不知道的知识点](https://juejin.cn/post/6892751013544263687)
-- [三方库源码笔记（11）-OkHttp 源码详解](https://juejin.cn/post/6895369745445748749)
-- [三方库源码笔记（12）-OkHttp / Retrofit 开发调试利器](https://juejin.cn/post/6895740949025177607)
-- [三方库源码笔记（13）-可能是全网第一篇 Coil 的源码分析文章](https://juejin.cn/post/6897872882051842061)
 
 # 一、前言
 
@@ -28,13 +12,11 @@ Retrofit 是这么自我介绍的：**A type-safe HTTP client for Android and Ja
 
 对 Kotlin 语言不熟悉的同学可以看我的这篇文章来入门：[两万六千字带你 Kotlin 入门](https://juejin.im/post/6880602489297895438)
 
-Retrofit 的源码并不算太复杂，但由于应用了很多种设计模式，所以在流程上会比较绕。笔者从 **2020/10/10** 开始看源码，陆陆续续看了几天源码后就开始动笔，但总感觉没法阐述得特别清晰，写着写着就成了目前的样子。读者如果觉得我有哪里写得不太好的地方也欢迎给下建议 😂😂
+Retrofit 的源码并不算太复杂，但由于应用了很多种设计模式，所以在流程上会比较绕。笔者陆陆续续看了几天源码后就开始动笔，但总感觉没法阐述得特别清晰，写着写着就成了目前的样子。读者如果觉得我有哪里写得不太好的地方也欢迎给下建议 😂😂
 
 # 二、小例子
 
 先来看几个简单的小例子，后续的讲解都会围绕这几个例子来展开
-
-先引入当前 Retrofit 的最新版本：
 
 ```groovy
 dependencies {
@@ -46,10 +28,8 @@ dependencies {
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/10/13 0:05
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 interface ApiService {
 
@@ -102,10 +82,8 @@ dependencies {
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/10/13 0:05
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 interface ApiService {
 
@@ -152,10 +130,8 @@ dependencies {
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/10/13 0:05
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 interface ApiService {
 
@@ -239,22 +215,21 @@ Retrofit 会根据 method 是否是**默认方法**来决定如何调用，这�
 2. 因为单个接口方法可能会先后被调用多次，所以将构造出来的 ServiceMethod 对象缓存到 serviceMethodCache 中以实现复用
 
 ```java
-  private final Map<Method, ServiceMethod<?>> serviceMethodCache = new ConcurrentHashMap<>();  
+private final Map<Method, ServiceMethod<?>> serviceMethodCache = new ConcurrentHashMap<>();  
 
-  ServiceMethod<?> loadServiceMethod(Method method) {
-    ServiceMethod<?> result = serviceMethodCache.get(method);
-    if (result != null) return result;
-
-    synchronized (serviceMethodCache) {
-      result = serviceMethodCache.get(method);
-      if (result == null) {
-        //重点
-        result = ServiceMethod.parseAnnotations(this, method);
-        serviceMethodCache.put(method, result);
-      }
-    }
-    return result;
-  }
+ServiceMethod<?> loadServiceMethod(Method method) {
+	ServiceMethod<?> result = serviceMethodCache.get(method);
+	if (result != null) return result;
+	synchronized (serviceMethodCache) {
+  		result = serviceMethodCache.get(method);
+  		if (result == null) {
+    		//重点
+    		result = ServiceMethod.parseAnnotations(this, method);
+    		serviceMethodCache.put(method, result);
+  		}
+	}
+	return result;
+}
 ```
 
 # 四、ServiceMethod
@@ -706,8 +681,8 @@ public final class Retrofit {
 ```java
 final class BuiltInConverters extends Converter.Factory {
     
-  @Override
-  public @Nullable Converter<ResponseBody, ?> responseBodyConverter(
+@Override
+public @Nullable Converter<ResponseBody, ?> responseBodyConverter(
       Type type, Annotation[] annotations, Retrofit retrofit) {
     if (type == ResponseBody.class) {
       return Utils.isAnnotationPresent(annotations, Streaming.class)
@@ -753,7 +728,7 @@ public <T> Converter<ResponseBody, T> nextResponseBodyConverter(
     }
 	···
     throw new IllegalArgumentException(builder.toString());
-  }
+}
 ```
 
 # 十、Call 如何替换为 Observable
@@ -896,7 +871,7 @@ final class CallExecuteObservable<T> extends Observable<Response<T>> {
 而 Retrofit 类的 `nextCallAdapter` 方法就是为每一个 API 方法选择 CallAdapter 进行返回值数据类型转换的方法。该方法会先遍历到 RxJava2CallAdapter ，发现其返回了非 null 值，之后就交由其进行处理
 
 ```java
- public CallAdapter<?, ?> nextCallAdapter(
+public CallAdapter<?, ?> nextCallAdapter(
       @Nullable CallAdapter.Factory skipPast, Type returnType, Annotation[] annotations) {
     Objects.requireNonNull(returnType, "returnType == null");
     Objects.requireNonNull(annotations, "annotations == null");
@@ -934,7 +909,7 @@ public interface Converter<F, T> {
   //用于将 F 类型转换为 T 类型
   @Nullable
   T convert(F value) throws IOException;
-	
+
   ···
       
 }
@@ -1122,10 +1097,8 @@ dependencies {
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/10/19 22:00
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 interface ApiService {
 
@@ -1596,10 +1569,8 @@ final class DefaultCallAdapterFactory extends CallAdapter.Factory {
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/10/20 22:53
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 data class UserBean(val userName: String, val userAge: Long)
 
@@ -1639,6 +1610,6 @@ userBean: UserBean(userName=leavesC, userAge=26)
 
 # 十五、结尾
 
-Retrofit 的源码就讲到这里了，自我感觉还是讲得挺全面的，虽然可能讲得没那么易于理解  =_=  从开始看源码到写完文章花了要十天出一些，断断续续地看源码，断断续续地写文章，总算写完了。觉得对你有所帮助就请点个赞吧 😂😂
+Retrofit 的源码就讲到这里了，自我感觉还是讲得挺全面的，虽然可能讲得没那么易于理解。从开始看源码到写完文章花了要十天出一些，断断续续地看源码，断断续续地写文章，总算写完了。觉得对你有所帮助就请点个赞吧 😂😂
 
 下篇文章就再来写关于 Retrofit 的扩展知识吧 ~~

@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -21,7 +21,7 @@
 -   加载正文数据和渲染页面，花费了 1400 ms。主要工作是：加载解析页面所需的 JS 文件，并通过 JS 调用端能力发起对正文数据的请求，客户端从 Server 拿到数据后，用 JsCallback 的方式回传给前端，前端需要对客户端传来的 JSON 格式的正文数据进行解析，并构造 DOM 结构，进而触发内核的渲染流程；此过程中，涉及到对 JS 的请求，加载、解析、执行等一系列步骤，并且存在端能力调用、JSON 解析、构造 DOM 等操作，较为耗时
 -   加载图片，花费了 700 ms（图片貌似标错了，此处统计的应该是从**渲染正文结束**到**首图加载完成**之间的时间）。主要工作是：在上一步中，前端获取到的正文数据包含落地页的图片地址集，在完成正文的渲染后，需要前端再次执行图片请求的端能力，客户端这边接收到图片地址集后按顺序请求服务器，完成下载后，客户端会调用一次 IO 将文件写入缓存，同时将对应图片的本地地址回传给前端，最终通过内核再发起一次 IO 操作获取到图片数据流，进行渲染
 
-可以看到，最耗时的就是 **加载正文数据和渲染页面** 和 **加载图片** 两个阶段，需要进行多次**网络请求、JS 调用、IO 读写**；其次是 **初始化 WebView** 和 **加载模板文件** 两个阶段，这两个阶段耗时相近，虽然基本不用进行网络请求，但涉及到对**浏览器内核和模板文件的初始化操作**，存在一些无法避免的时间花费
+可以看到，最耗时的就是 **加载正文数据和渲染页面** 和 **加载图片** 两个阶段，需要进行多次 **网络请求、JS 调用、IO 读写**；其次是 **初始化 WebView** 和 **加载模板文件** 两个阶段，这两个阶段耗时相近，虽然基本不用进行网络请求，但涉及到对 **浏览器内核和模板文件的初始化操作**，存在一些无法避免的时间花费
 
 从这就可以得出最基本的优化方向：
 
@@ -51,8 +51,7 @@
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2021/10/4 18:57
+ * @Author: leavesCZY
  * @Desc:
  * @公众号：字节数组
  */
@@ -104,7 +103,7 @@ object WebViewCacheHolder {
 
 想要优化首屏的渲染速度，首先得从整个页面访问请求的链路上看，借用阿里巴巴淘系技术的一张图，下面是常规端上 H5 页面访问链路
 
-![](https://pic2.zhimg.com/80/v2-f0f85b655b9be3ec088753438fef0fe4_720w.jpg)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/597f1f84b9a7467296f65d273b99450c~tplv-k3u1fbpfcp-zoom-1.image)
 
 这一整个过程需要完成多个网络请求和 IO 操作，WebView 在加载了基本的 HTML 和 CSS 文件后，再通过 JS 从服务端获取正文数据，拿到数据后还需要完成解析 JSON、构造 DOM、应用 CSS 样式等一系列耗时操作，最终才能由内核进行渲染上屏
 
@@ -242,8 +241,7 @@ Cache-Control 避免了 WebView 在有效期内去重复请求资源，有效期
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2021/10/4 18:56
+ * @Author: leavesCZY
  * @Desc:
  * @公众号：字节数组
  */
@@ -256,17 +254,31 @@ object WebViewInterceptRequestProxy {
     }
 
     private val okHttpClient by lazy {
-        OkHttpClient.Builder().cache(Cache(webViewResourceCacheDir, 100L * 1024 * 1024))
+        OkHttpClient.Builder().cache(Cache(webViewResourceCacheDir, 600L * 1024 * 1024))
             .followRedirects(false)
             .followSslRedirects(false)
-            .addNetworkInterceptor(
-                ChuckerInterceptor.Builder(application)
-                    .collector(ChuckerCollector(application))
-                    .maxContentLength(250000L)
-                    .alwaysReadResponseBody(true)
-                    .build()
-            )
+            .addNetworkInterceptor(getChuckerInterceptor(application = application))
+            .addNetworkInterceptor(getWebViewCacheInterceptor())
             .build()
+    }
+
+    private fun getChuckerInterceptor(application: Application): Interceptor {
+        return ChuckerInterceptor.Builder(application)
+            .collector(ChuckerCollector(application))
+            .maxContentLength(250000L)
+            .alwaysReadResponseBody(true)
+            .build()
+    }
+
+    private fun getWebViewCacheInterceptor(): Interceptor {
+        return Interceptor { chain ->
+            val request = chain.request()
+            val response = chain.proceed(request)
+            response.newBuilder().removeHeader("pragma")
+                .removeHeader("Cache-Control")
+                .header("Cache-Control", "max-age=" + (360L * 24 * 60 * 60))
+                .build()
+        }
     }
 
     fun init(application: Application) {
@@ -274,81 +286,76 @@ object WebViewInterceptRequestProxy {
     }
 
     fun shouldInterceptRequest(webResourceRequest: WebResourceRequest?): WebResourceResponse? {
-        if (webResourceRequest == null || webResourceRequest.isForMainFrame) {
-            return null
-        }
-        val url = webResourceRequest.url ?: return null
-        if (isHttpUrl(url)) {
-            return getHttpResource(url.toString(), webResourceRequest)
+        if (toProxy(webResourceRequest)) {
+            return getHttpResource(webResourceRequest!!)
         }
         return null
     }
 
-    private fun isHttpUrl(url: Uri): Boolean {
-        val scheme = url.scheme
-        log("url: $url")
-        log("scheme: $scheme")
-        if (scheme == "http" || scheme == "https") {
-            return true
+    private fun toProxy(webResourceRequest: WebResourceRequest?): Boolean {
+        if (webResourceRequest == null || webResourceRequest.isForMainFrame) {
+            return false
+        }
+        val url = webResourceRequest.url ?: return false
+        if (!webResourceRequest.method.equals("GET", true)) {
+            return false
+        }
+        if (url.scheme == "https" || url.scheme == "http") {
+            val urlString = url.toString()
+            if (urlString.endsWith(".js", true) ||
+                urlString.endsWith(".css", true) ||
+                urlString.endsWith(".jpg", true) ||
+                urlString.endsWith(".png", true) ||
+                urlString.endsWith(".webp", true)
+            ) {
+                return true
+            }
         }
         return false
     }
 
-    private fun getHttpResource(
-        url: String,
-        webResourceRequest: WebResourceRequest
-    ): WebResourceResponse? {
-        val method = webResourceRequest.method
-        if (method.equals("GET", true)) {
-            try {
-                val requestBuilder =
-                    Request.Builder().url(url).method(webResourceRequest.method, null)
-                val requestHeaders = webResourceRequest.requestHeaders
-                if (!requestHeaders.isNullOrEmpty()) {
-                    var requestHeadersLog = ""
-                    requestHeaders.forEach {
-                        requestBuilder.addHeader(it.key, it.value)
-                        requestHeadersLog = it.key + " : " + it.value + "\n" + requestHeadersLog
-                    }
-                    log("requestHeaders: $requestHeadersLog")
+    private fun getHttpResource(webResourceRequest: WebResourceRequest): WebResourceResponse? {
+        try {
+            val url = webResourceRequest.url.toString()
+            val requestBuilder =
+                Request.Builder().url(url).method(webResourceRequest.method, null)
+            val requestHeaders = webResourceRequest.requestHeaders
+            if (!requestHeaders.isNullOrEmpty()) {
+                requestHeaders.forEach {
+                    requestBuilder.addHeader(it.key, it.value)
                 }
-                val response = okHttpClient.newCall(requestBuilder.build())
-                    .execute()
-                val body = response.body
-                if (body != null) {
-                    val mimeType = response.header(
-                        "content-type", body.contentType()?.type
-                    ).apply {
-                        log(this)
-                    }
-                    val encoding = response.header(
-                        "content-encoding",
-                        "utf-8"
-                    ).apply {
-                        log(this)
-                    }
-                    val responseHeaders = mutableMapOf<String, String>()
-                    var responseHeadersLog = ""
-                    for (header in response.headers) {
-                        responseHeaders[header.first] = header.second
-                        responseHeadersLog =
-                            header.first + " : " + header.second + "\n" + responseHeadersLog
-                    }
-                    log("responseHeadersLog: $responseHeadersLog")
-                    var message = response.message
-                    val code = response.code
-                    if (code == 200 && message.isBlank()) {
-                        message = "OK"
-                    }
-                    val resourceResponse =
-                        WebResourceResponse(mimeType, encoding, body.byteStream())
-                    resourceResponse.responseHeaders = responseHeaders
-                    resourceResponse.setStatusCodeAndReasonPhrase(code, message)
-                    return resourceResponse
-                }
-            } catch (e: Throwable) {
-                log("Throwable: $e")
             }
+
+            val response = okHttpClient.newCall(requestBuilder.build()).execute()
+            val code = response.code
+            if (code != 200) {
+                return null
+            }
+            val body = response.body
+            if (body != null) {
+                val mimeType = response.header(
+                    "content-type", body.contentType()?.type
+                )
+                val encoding = response.header(
+                    "content-encoding",
+                    "utf-8"
+                )
+                val responseHeaders = mutableMapOf<String, String>()
+                for (header in response.headers) {
+                    responseHeaders[header.first] = header.second
+                }
+                var message = response.message
+                if (message.isBlank()) {
+                    message = "OK"
+                }
+                val resourceResponse =
+                    WebResourceResponse(mimeType, encoding, body.byteStream())
+                resourceResponse.responseHeaders = responseHeaders
+                resourceResponse.setStatusCodeAndReasonPhrase(code, message)
+                return resourceResponse
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
         return null
     }
@@ -374,7 +381,7 @@ object WebViewInterceptRequestProxy {
 采用此方案的好处有：
 
 - 通过 OkHttp 本身的 Cache 功能来实现资源缓存，并不局限于特定的文件类型，可以用于图片、HTML、JS、CSS 等多种类型
-- OkHttp 是完全遵循 Http 协议的，我们可以在这基础上来自由扩展 Http 缓存策略
+- OkHttp 是完全遵循 Http 协议的，我们可以在这基础上来自由扩展缓存策略。例如，对于某些资源文件，可以通过拦截器来主动设置有效期比较长的 Cache-Control，参照上述的 `getWebViewCacheInterceptor` 方法
 - 解耦了客户端和前端代码，由客户端充当 Server 的角色，对于前端来说是完全无感知的，用比较低的成本就实现了两端缓存共享
 - WebView 自带的缓存机制允许的最大缓存空间是比较小的，此方案相当于突破了 WebView 的最大缓存容量限制
 - 如果移动端已经预置了离线包，那么就可以通过此方案判断离线包是否已经包含目标文件，存在的话直接使用，否则才联网请求，参照上述的 `getAssetsImage` 方法
@@ -411,4 +418,4 @@ CDN 的全称是 Content Delivery Network，即内容分发网络。CDN 是构�
 
 
 
-最后也当然少不了本文的示例代码了：[RobustWebView](https://github.com/leavesC/RobustWebView)
+最后也当然少不了本文的示例代码了：[RobustWebView](https://github.com/leavesCZY/RobustWebView)

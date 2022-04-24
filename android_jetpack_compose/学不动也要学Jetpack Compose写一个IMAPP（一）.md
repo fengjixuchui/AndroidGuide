@@ -1,10 +1,10 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
 在 2019 年的 Google/IO 大会上，亮相了一个全新的 Android 原生 UI 开发框架 Jetpack Compose。与 IOS 的 SwiftUI 一样，Jetpack Compose 也是一个声明式的 UI  框架，随着 Android 和 IOS 两大移动平台相继推出了自己平台专属的声明式 UI 框架，标志着整个行业已开始转向声明性界面模型，该模型大大简化了与构建和更新界面关联的工程设计
 
-经过两年多的打磨，到了今年七月底，Google 正式发布了 Jetpack Compose 的 1.0 版本，这是 Compose 的稳定版本，可供开发者在生产环境中使用
+经过两年多的打磨，到了 2021 年七月底，Google 正式发布了 Jetpack Compose 的 1.0 版本，这是 Compose 的稳定版本，可供开发者在生产环境中使用
 
 引用 Google 官网对 Jetpack Compose 的介绍：Jetpack Compose 是用于构建原生 Android 界面的新工具包。它可简化并加快 Android 上的界面开发，帮助您使用更少的代码、强大的工具和直观的 Kotlin API，快速打造生动而精彩的应用
 
@@ -36,7 +36,7 @@
 
 实践出真理，学不动也要学 🤣🤣 Jetpack Compose 大概率会成为以后 Android 原生应用开发时的首选技术方案，所以我也做了一次实战演练，花了两个月时间断断续续写了一个完全用 Compose 实现的 IM APP，实现了基本的好友聊天功能
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/22cfd6b6fcbe4e019d42a1f7c29405e6~tplv-k3u1fbpfcp-zoom-1.image)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbeccad79d94d0dbff85bc02d7ccf04~tplv-k3u1fbpfcp-zoom-1.image)
 
 整个 APP 采用的是单 Activity 形式，内部通过 navigation 来模拟多屏幕跳转，使用了单向数据流模式，所有业务逻辑均通过 ViewModel 来完成，业务逻辑的处理结果再以可组合函数的入参参数的形式回传给 UI 层，底层通过腾讯云的 IM SDK 来实现通信
 
@@ -51,13 +51,13 @@
 整个过程就类似如下所示。通过 TextView 来显示用户名，在用户名发生变化时需要通过主动调用 `TextView.setText` 方法来刷新 UI，开发者直接持有并维护着每个视图结点，想要更新视图都需要开发者直接向控件下发“指令”，这整个过程的复杂度和出错概率随着需要维护的控件数量的增加而增加。这种方式就属于**命令式**
 
 ```kotlin
-    val tvUserName = findViewById<TextView>(R.id.tvUserName)
+val tvUserName = findViewById<TextView>(R.id.tvUserName)
 
-    fun onUserNameChanged(userName: String) {
-        tvUserName.text = userName
-    }
+fun onUserNameChanged(userName: String) {
+    tvUserName.text = userName
+}
 
-    onUserNameChanged("业志陈")
+onUserNameChanged("业志陈")
 ```
 
 Compose 则是通过声明一系列不包含返回值的**可组合（Composable）函数**来构建界面的。可组合函数只负责描述所需的屏幕状态，且不提供任何视图控件的引用给到开发者。可组合函数可以包含入参参数，参数就用来参与描述屏幕状态，当需要改变屏幕状态时，也是通过**生成新的入参参数并再次调用可组合函数**来实现 UI 刷新的
@@ -138,33 +138,33 @@ fun Text(
 当中，最需要关注的当属 Modifier 这个入参参数了，Compose 提供了一系列开箱即用的“控件”函数，例如，对应 FrameLayout 的 Box()、对应 ImageView 的 Image()、对应 RecyclerView 的 LazyColumn() 等，这些控件都包含一个 Modifier 入参参数。Modifier 功能十分强大，每个控件的**宽高大小、位置、方向、对齐、裁切、间距、背景色、点击、甚至手势识别**等功能都需要通过它来完成，每个功能都通过扩展函数的方式来声明，以链式调用的方式进行使用
 
 ```kotlin
-	Text(
-            modifier = Modifier
-                .weight(weight = messageWidthWeight, fill = false)
-                .padding(
-                    start = messageStartPadding,
-                    top = messageTopPadding,
-                    end = messageEndPadding
+Text(
+        modifier = Modifier
+            .weight(weight = messageWidthWeight, fill = false)
+            .padding(
+                start = messageStartPadding,
+                top = messageTopPadding,
+                end = messageEndPadding
+            )
+            .clip(shape = messageShape)
+            .background(color = friendMsgBgColor)
+            .pointerInput(key1 = Unit) {
+                detectTapGestures(
+                    onLongPress = {
+                        onLongPressMessage(textMessage)
+                    },
                 )
-                .clip(shape = messageShape)
-                .background(color = friendMsgBgColor)
-                .pointerInput(key1 = Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            onLongPressMessage(textMessage)
-                        },
-                    )
-                }
-                .padding(
-                    start = messageInnerPadding,
-                    top = messageInnerPadding,
-                    end = messageInnerPadding,
-                    bottom = messageInnerPadding
-                ),
-            text = textMessage.msg,
-            style = MaterialTheme.typography.subtitle1,
-            textAlign = TextAlign.Left,
-        )
+            }
+            .padding(
+                start = messageInnerPadding,
+                top = messageInnerPadding,
+                end = messageInnerPadding,
+                bottom = messageInnerPadding
+            ),
+        text = textMessage.msg,
+        style = MaterialTheme.typography.subtitle1,
+        textAlign = TextAlign.Left,
+    )
 ```
 
 Compose 提供的一系列“控件”函数基本已经能够满足我们的日常开发需求了，我们在开发 Compose 应用时，就可以通过嵌套组合官方提供的控件来实现各种自定义需求
@@ -535,26 +535,26 @@ Jetpack Compose 提供了一些功能强大且可扩展的 API，可用于在应
 ProfileScreen 使用`rememberInfiniteTransition()`来实现这种效果。InfiniteTransition 通过 animateFloat、animateValue、animateColor 等方式来保存子动画，这些动画一进入组合阶段就开始运行，除非被移除，否则不会停止。再为 InfiniteTransition 指定一个初始值和一个结束值，并指定动画以反转的形式来回运行，animateValue 就会在这两个值之间不断地连贯变化，之后将 animateValue 应用到背景图的布局参数上即可实现动画效果
 
 ```kotlin
-        val animateValue by rememberInfiniteTransition().animateFloat(
-            initialValue = 1.3f, targetValue = 1.9f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        )
-        NetworkImage(
-            data = userFaceUrl,
-            modifier = Modifier
-                .constrainAs(ref = background) {
+val animateValue by rememberInfiniteTransition().animateFloat(
+    initialValue = 1.3f, targetValue = 1.9f,
+    animationSpec = infiniteRepeatable(
+        animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
+        repeatMode = RepeatMode.Reverse,
+    ),
+)
+NetworkImage(
+    data = userFaceUrl,
+    modifier = Modifier
+        .constrainAs(ref = background) {
 
-                }
-                .fillMaxWidth()
-                .aspectRatio(ratio = 5f / 4f)
-                .scrim(colors = listOf(Color(0x40000000), Color(0x40F4F4F4)))
-                .clip(shape = BezierShape(padding = animateValue * 100)) //裁切
-                .scale(scale = animateValue) //缩放
-                .rotate(degrees = animateValue * 10.3f) //旋转
-        )
+        }
+        .fillMaxWidth()
+        .aspectRatio(ratio = 5f / 4f)
+        .scrim(colors = listOf(Color(0x40000000), Color(0x40F4F4F4)))
+        .clip(shape = BezierShape(padding = animateValue * 100)) //裁切
+        .scale(scale = animateValue) //缩放
+        .rotate(degrees = animateValue * 10.3f) //旋转
+)
 ```
 
 ## 手势操作 
@@ -564,49 +564,49 @@ Compose 中的 Modifier 十分强大，不仅仅是用于进行布局，像点�
 拖拽 OutlinedAvatar 的过程中系统会不断回调 onDrag 函数，在回调里通过用户的拖拽值不断改变 offsetX 和 offsetY 两个值，就可以不断触发 OutlinedAvatar 进行重组，以此实现拖拽效果。当用户松手时，onDragEnd 函数会被回调，再通过 Animatable 将 OutlinedAvatar 的偏移量重置为零，这样就可以实现自动移回原位的效果了
 
 ```kotlin
-        val coroutineScope = rememberCoroutineScope()
-        var offsetX by remember { mutableStateOf(0f) }
-        var offsetY by remember { mutableStateOf(0f) }
-        OutlinedAvatar(
-            data = userFaceUrl,
-            modifier = Modifier
-                .offset {
-                    IntOffset(
-                        x = offsetX.roundToInt(),
-                        y = offsetY.roundToInt()
-                    )
-                }
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = {
+val coroutineScope = rememberCoroutineScope()
+var offsetX by remember { mutableStateOf(0f) }
+var offsetY by remember { mutableStateOf(0f) }
+OutlinedAvatar(
+    data = userFaceUrl,
+    modifier = Modifier
+        .offset {
+            IntOffset(
+                x = offsetX.roundToInt(),
+                y = offsetY.roundToInt()
+            )
+        }
+        .pointerInput(Unit) {
+            detectDragGestures(
+                onDragStart = {
 
-                        },
-                        onDragCancel = {
+                },
+                onDragCancel = {
 
-                        },
-                        onDragEnd = {
-                            coroutineScope.launch {
-                                Animatable(
-                                    initialValue = Offset(offsetX, offsetY),
-                                    typeConverter = Offset.VectorConverter
-                                ).animateTo(
-                                    targetValue = Offset(x = 0f, y = 0f),
-                                    animationSpec = SpringSpec(dampingRatio = Spring.DampingRatioHighBouncy),
-                                    block = {
-                                        offsetX = value.x
-                                        offsetY = value.y
-                                    }
-                                )
+                },
+                onDragEnd = {
+                    coroutineScope.launch {
+                        Animatable(
+                            initialValue = Offset(offsetX, offsetY),
+                            typeConverter = Offset.VectorConverter
+                        ).animateTo(
+                            targetValue = Offset(x = 0f, y = 0f),
+                            animationSpec = SpringSpec(dampingRatio = Spring.DampingRatioHighBouncy),
+                            block = {
+                                offsetX = value.x
+                                offsetY = value.y
                             }
-                        },
-                        onDrag = { change, dragAmount ->
-                            change.consumeAllChanges()
-                            offsetX += dragAmount.x
-                            offsetY += dragAmount.y
-                        },
-                    )
-                }
-        )
+                        )
+                    }
+                },
+                onDrag = { change, dragAmount ->
+                    change.consumeAllChanges()
+                    offsetX += dragAmount.x
+                    offsetY += dragAmount.y
+                },
+            )
+        }
+)
 ```
 
 # 十、主题
@@ -785,9 +785,9 @@ fun HomeScreen(
 
 关于 Jetpack Compose 的大部分知识点都讲完了，自我感觉 compose_chat 能很好的帮助读者入门，最后当然也少不了源码了
 
-项目地址：[compose_chat](https://github.com/leavesC/compose_chat)
+项目地址：[compose_chat](https://github.com/leavesCZY/compose_chat)
 
-APK 下载尝鲜：[compose_chat](https://github.com/leavesC/compose_chat/releases)
+APK 下载尝鲜：[compose_chat](https://github.com/leavesCZY/compose_chat/releases)
 
 由于腾讯云 IM SDK 免费版最多只能注册一百个账号，因此读者如果发现注册不了的话，可以使用以下几个我预先注册好的账号，但多设备同时登陆的话会互相挤掉线 ~~
 

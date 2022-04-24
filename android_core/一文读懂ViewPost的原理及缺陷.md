@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -8,10 +8,8 @@
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/03/14 11:05
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 class MainActivity : AppCompatActivity() {
 
@@ -72,23 +70,23 @@ github.leavesc.view E/view.Post: height: 263
 - 如果 `mAttachInfo` 为 null，则将 Runnable 交由 HandlerActionQueue 进行处理
 
 ```java
-    public boolean post(Runnable action) {
-        final AttachInfo attachInfo = mAttachInfo;
-        if (attachInfo != null) {
-            return attachInfo.mHandler.post(action);
-        }
-        // Postpone the runnable until we know on which thread it needs to run.
-        // Assume that the runnable will be successfully placed after attach.
-        getRunQueue().post(action);
-        return true;
+public boolean post(Runnable action) {
+    final AttachInfo attachInfo = mAttachInfo;
+    if (attachInfo != null) {
+        return attachInfo.mHandler.post(action);
     }
+    // Postpone the runnable until we know on which thread it needs to run.
+    // Assume that the runnable will be successfully placed after attach.
+    getRunQueue().post(action);
+    return true;
+}
 
-    private HandlerActionQueue getRunQueue() {
-        if (mRunQueue == null) {
-            mRunQueue = new HandlerActionQueue();
-        }
-        return mRunQueue;
+private HandlerActionQueue getRunQueue() {
+    if (mRunQueue == null) {
+        mRunQueue = new HandlerActionQueue();
     }
+    return mRunQueue;
+}
 ```
 
 ## AttachInfo
@@ -122,39 +120,39 @@ final static class AttachInfo {
 查找 `mAttachInfo` 的赋值时机可以追踪到 View 的 `dispatchAttachedToWindow` 方法，该方法被调用就意味着 View 已经 Attach 到 Window 上了
 
 ```java
-    @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
-    void dispatchAttachedToWindow(AttachInfo info, int visibility) {
-        mAttachInfo = info;
-        ···
-    }
+@UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
+void dispatchAttachedToWindow(AttachInfo info, int visibility) {
+    mAttachInfo = info;
+    ···
+}
 ```
 
 再查找`dispatchAttachedToWindow` 方法的调用时机，可以跟踪到 ViewRootImpl 类。ViewRootImpl 内就包含一个 Handler 对象 `mHandler`，并在构造函数中以 `mHandler` 作为构造参数之一来初始化 `mAttachInfo`。ViewRootImpl 的`performTraversals()`方法就会调用 DecorView 的 `dispatchAttachedToWindow` 方法并传入 `mAttachInfo`，从而层层调用整个视图树中所有 View 的 `dispatchAttachedToWindow` 方法，使得所有 childView 都能获取到 `mAttachInfo` 对象
 
 ```java
-    final ViewRootHandler mHandler = new ViewRootHandler();
+final ViewRootHandler mHandler = new ViewRootHandler();
 
-    public ViewRootImpl(Context context, Display display, IWindowSession session,
-                        boolean useSfChoreographer) {
+public ViewRootImpl(Context context, Display display, IWindowSession session,
+                    boolean useSfChoreographer) {
+    ···
+    mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display, this, mHandler, this,
+            context);
+    ···
+}
+
+private void performTraversals() {
+    ···
+    if (mFirst) {
         ···
-        mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display, this, mHandler, this,
-                context);
+        host.dispatchAttachedToWindow(mAttachInfo, 0);
         ···
     }
-
-    private void performTraversals() {
-        ···
-        if (mFirst) {
-            ···
-            host.dispatchAttachedToWindow(mAttachInfo, 0);
-    	    ···
-        }
-        ···
-        performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
-        performLayout(lp, mWidth, mHeight);
-        performDraw();
-        ···
-    }
+    ···
+    performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
+    performLayout(lp, mWidth, mHeight);
+    performDraw();
+    ···
+}
 ```
 
 此外，`performTraversals()`方法也负责启动整个视图树的 Measure、Layout、Draw 流程，只有当 `performLayout` 被调用后 View 才能确定自己的宽高信息。而 `performTraversals()`本身也是交由 ViewRootHandler 来调用的，即整个视图树的绘制任务也是先插入到 MessageQueue 中，后续再由主线程取出任务进行执行。由于插入到 MessageQueue 中的消息是交由主线程来顺序执行的，所以 `attachInfo.mHandler.post(action)`就保证了 `action` 一定是在 `performTraversals` 执行完毕后才会被调用，因此我们就可以在 Runnable 中获取到 View 的真实宽高了
@@ -224,17 +222,17 @@ public class HandlerActionQueue {
 而这个主动执行任务的操作也是由 View 的 `dispatchAttachedToWindow`来完成的，从而使得 `mActions` 中的所有任务都会被插入到 `mHandler` 的 MessageQueue 中，等到主线程执行完 `performTraversals()` 方法后就会来执行 `mActions`，所以此时我们依然可以获取到 View 的真实宽高
 
 ```java
-    @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
-    void dispatchAttachedToWindow(AttachInfo info, int visibility) {
-        mAttachInfo = info;
-        ···
-        // Transfer all pending runnables.
-        if (mRunQueue != null) {
-            mRunQueue.executeActions(info.mHandler);
-            mRunQueue = null;
-        }
-        ···
+@UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
+void dispatchAttachedToWindow(AttachInfo info, int visibility) {
+    mAttachInfo = info;
+    ···
+    // Transfer all pending runnables.
+    if (mRunQueue != null) {
+        mRunQueue.executeActions(info.mHandler);
+        mRunQueue = null;
     }
+    ···
+}
 ```
 
 # 二、Handler.post(Runnable)
@@ -256,74 +254,74 @@ public class HandlerActionQueue {
 首先，ActivityThread 的 `handleResumeActivity` 方法就负责来回调 Activity 的 `onResume` 方法，且如果当前 Activity 是第一次启动，则会向 ViewManager（wm）添加 DecorView
 
 ```java
-    @Override
-    public void handleResumeActivity(IBinder token, boolean finalStateRequest, boolean isForward,
-            String reason) {
+@Override
+public void handleResumeActivity(IBinder token, boolean finalStateRequest, boolean isForward,
+        String reason) {
+    ···
+    //Activity 的 onResume 方法
+    final ActivityClientRecord r = performResumeActivity(token, finalStateRequest, reason);
+    ···
+    if (r.window == null && !a.mFinished && willBeVisible) {
         ···
-        //Activity 的 onResume 方法
-        final ActivityClientRecord r = performResumeActivity(token, finalStateRequest, reason);
-        ···
-        if (r.window == null && !a.mFinished && willBeVisible) {
-            ···
-            ViewManager wm = a.getWindowManager();
-            if (a.mVisibleFromClient) {
-                if (!a.mWindowAdded) {
-                    a.mWindowAdded = true;
-                    //重点
-                    wm.addView(decor, l);
-                } else {
-                    a.onWindowAttributesChanged(l);
-                }
+        ViewManager wm = a.getWindowManager();
+        if (a.mVisibleFromClient) {
+            if (!a.mWindowAdded) {
+                a.mWindowAdded = true;
+                //重点
+                wm.addView(decor, l);
+            } else {
+                a.onWindowAttributesChanged(l);
             }
-        } else if (!willBeVisible) {
-            if (localLOGV) Slog.v(TAG, "Launch " + r + " mStartedActivity set");
-            r.hideForNow = true;
         }
-		···
+    } else if (!willBeVisible) {
+        if (localLOGV) Slog.v(TAG, "Launch " + r + " mStartedActivity set");
+        r.hideForNow = true;
     }
+    ···
+}
 ```
 
 此处的 ViewManager 的具体实现类即 WindowManagerImpl，WindowManagerImpl 会将操作转交给 WindowManagerGlobal
 
 ```java
-    @UnsupportedAppUsage
-    private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
+@UnsupportedAppUsage
+private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
 
-    @Override
-    public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
-        applyDefaultToken(params);
-        mGlobal.addView(view, params, mContext.getDisplayNoVerify(), mParentWindow,
-                mContext.getUserId());
-    }
+@Override
+public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
+    applyDefaultToken(params);
+    mGlobal.addView(view, params, mContext.getDisplayNoVerify(), mParentWindow,
+            mContext.getUserId());
+}
 ```
 
 WindowManagerGlobal 就会完成 ViewRootImpl 的初始化并且调用其 `setView` 方法，该方法内部就会再去调用 `performTraversals` 方法启动视图树的绘制流程
 
 ```java
-    public void addView(View view, ViewGroup.LayoutParams params,
-            Display display, Window parentWindow, int userId) {
+public void addView(View view, ViewGroup.LayoutParams params,
+        Display display, Window parentWindow, int userId) {
+    ···
+    ViewRootImpl root;
+    View panelParentView = null;
+    synchronized (mLock) {
         ···
-        ViewRootImpl root;
-        View panelParentView = null;
-        synchronized (mLock) {
-            ···
-            root = new ViewRootImpl(view.getContext(), display);
-            view.setLayoutParams(wparams);
-            mViews.add(view);
-            mRoots.add(root);
-            mParams.add(wparams);
-            // do this last because it fires off messages to start doing things
-            try {
-                root.setView(view, wparams, panelParentView, userId);
-            } catch (RuntimeException e) {
-                // BadTokenException or InvalidDisplayException, clean up.
-                if (index >= 0) {
-                    removeViewLocked(index, true);
-                }
-                throw e;
+        root = new ViewRootImpl(view.getContext(), display);
+        view.setLayoutParams(wparams);
+        mViews.add(view);
+        mRoots.add(root);
+        mParams.add(wparams);
+        // do this last because it fires off messages to start doing things
+        try {
+            root.setView(view, wparams, panelParentView, userId);
+        } catch (RuntimeException e) {
+            // BadTokenException or InvalidDisplayException, clean up.
+            if (index >= 0) {
+                removeViewLocked(index, true);
             }
+            throw e;
         }
     }
+}
 ```
 
 所以说， `performTraversals` 方法的调用时机是在 `onResume` 方法之后，所以我们在 `onCreate`和`onResume` 函数中都无法获取到 View 的实际宽高。当然，当 Activity 在单次生命周期过程中第二次调用`onResume` 方法时自然就可以获取到 View 的宽高属性
@@ -335,44 +333,44 @@ WindowManagerGlobal 就会完成 ViewRootImpl 的初始化并且调用其 `setVi
 但该结论也只在 **API 24 及之后的版本**上才成立，`View.post(Runnable)` 方法也存在着一个版本兼容性问题，在 **API 23 及之前的版本**上有着不同的实现方式
 
 ```java
-    //Android API 24 及之后的版本
-    public boolean post(Runnable action) {
-        final AttachInfo attachInfo = mAttachInfo;
-        if (attachInfo != null) {
-            return attachInfo.mHandler.post(action);
-        }
-        // Postpone the runnable until we know on which thread it needs to run.
-        // Assume that the runnable will be successfully placed after attach.
-        getRunQueue().post(action);
-        return true;
+//Android API 24 及之后的版本
+public boolean post(Runnable action) {
+    final AttachInfo attachInfo = mAttachInfo;
+    if (attachInfo != null) {
+        return attachInfo.mHandler.post(action);
     }
+    // Postpone the runnable until we know on which thread it needs to run.
+    // Assume that the runnable will be successfully placed after attach.
+    getRunQueue().post(action);
+    return true;
+}
 
-    //Android API 23 及之前的版本
-    public boolean post(Runnable action) {
-        final AttachInfo attachInfo = mAttachInfo;
-        if (attachInfo != null) {
-            return attachInfo.mHandler.post(action);
-        }
-        // Assume that post will succeed later
-        ViewRootImpl.getRunQueue().post(action);
-        return true;
+//Android API 23 及之前的版本
+public boolean post(Runnable action) {
+    final AttachInfo attachInfo = mAttachInfo;
+    if (attachInfo != null) {
+        return attachInfo.mHandler.post(action);
     }
+    // Assume that post will succeed later
+    ViewRootImpl.getRunQueue().post(action);
+    return true;
+}
 ```
 
 在 Android API 23 及之前的版本上，当 `attachInfo` 为 null 时，会将 Runnable 保存到 ViewRootImpl 内部的一个静态成员变量 `sRunQueues` 中。而 `sRunQueues` 内部是通过 ThreadLocal 来保存 RunQueue 的，这意味着不同线程获取到的 RunQueue 是不同对象，这也意味着**如果我们在子线程中调用`View.post(Runnable)` 方法的话，该 Runnable 永远不会被执行，因为主线程根本无法获取到子线程的 RunQueue**
 
 ```java
-    static final ThreadLocal<RunQueue> sRunQueues = new ThreadLocal<RunQueue>();
+static final ThreadLocal<RunQueue> sRunQueues = new ThreadLocal<RunQueue>();
 
-    static RunQueue getRunQueue() {
-        RunQueue rq = sRunQueues.get();
-        if (rq != null) {
-            return rq;
-        }
-        rq = new RunQueue();
-        sRunQueues.set(rq);
+static RunQueue getRunQueue() {
+    RunQueue rq = sRunQueues.get();
+    if (rq != null) {
         return rq;
     }
+    rq = new RunQueue();
+    sRunQueues.set(rq);
+    return rq;
+}
 ```
 
 此外，由于`sRunQueues` 是静态成员变量，主线程会一直对应同一个 RunQueue 对象，如果我们是在主线程中调用`View.post(Runnable)`方法的话，那么该 Runnable 就会被添加到和主线程关联的 RunQueue 中，后续主线程就会取出该 Runnable 来执行

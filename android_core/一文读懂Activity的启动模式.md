@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -12,7 +12,7 @@ Activity 的启动模式本身是一个挺难理解的知识点，大多数开�
 
 任务栈代表的是一个整体，本身包含了多个 Activity，当任务栈中的所有 Activity 都被弹出后，任务栈也就随之就被回收了。就像下图所示，三个 Activity 通过相继启动组成了一个任务栈，Activity 1 是整个任务栈的根 Activity，当用户不断按返回键，Activity 就会依次被弹出
 
-![](https://z3.ax1x.com/2021/04/16/cWkBwD.png)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4f2312098b3d4fb28c3bbd272beb85bb~tplv-k3u1fbpfcp-zoom-1.image)
 
 # 2、返回栈
 
@@ -33,22 +33,22 @@ Activity 的启动模式本身是一个挺难理解的知识点，大多数开�
 在默认情况下，同一应用中的所有 Activity 会具有相同的亲和性，所有 Activity 默认会以当前应用的 applicationId 作为自己的 taskAffinity 属性值。我们可以手动为应用内的部分 Activity 指定特定的 taskAffinity，从而将这部分 Activity 进行分组
 
 ```xml
-        <activity
-            android:name=".StandardActivity"
-            android:launchMode="standard"
-            android:taskAffinity="task.test1" />
-        <activity
-            android:name=".SingleTopActivity"
-            android:launchMode="singleTop"
-            android:taskAffinity="task.test2" />
-        <activity
-            android:name=".SingleTaskActivity"
-            android:launchMode="singleTask"
-            android:taskAffinity="task.test3" />
-        <activity
-            android:name=".SingleInstanceActivity"
-            android:launchMode="singleInstance"
-            android:taskAffinity="task.test4" />
+<activity
+    android:name=".StandardActivity"
+    android:launchMode="standard"
+    android:taskAffinity="task.test1" />
+<activity
+    android:name=".SingleTopActivity"
+    android:launchMode="singleTop"
+    android:taskAffinity="task.test2" />
+<activity
+    android:name=".SingleTaskActivity"
+    android:launchMode="singleTask"
+    android:taskAffinity="task.test3" />
+<activity
+    android:name=".SingleInstanceActivity"
+    android:launchMode="singleInstance"
+    android:taskAffinity="task.test4" />
 ```
 
 从概念上讲，具有相同 taskAffinity 的 Activity 归属于同一任务栈（实际上并不一定）。从用户的角度来看则是归属于同一“应用”，因为每种 taskAffinity 在最近任务列表中会各自独占一个列表项，看起来就像一个个单独的应用，而实际上这些列表项可能是来自于同个应用
@@ -79,39 +79,38 @@ launchMode 一共包含以下四种属性值：
 
 采用 `singleTask` 启动的 Activity 添加到返回栈的过程就如下图所示。一开始返回栈中只包含 Activity 1 和 Activity 2 组成的任务栈，当 Activity 2 启动了处于后台的 Activity Y 时，Activity Y 和 Activity X 组成的任务栈就会被转到前台，覆盖住当前任务栈。最终返回栈中就变成了四个 Activity
 
-![](https://z3.ax1x.com/2021/04/16/cWhbjK.png)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3afd90bba8ee4b1187de27622f25cead~tplv-k3u1fbpfcp-zoom-1.image)
 
 再来写个 Demo 来验证下这四种 launchMode 的效果
 
 声明四种不同 launchMode 的 Activity，每个 Activity 均声明了不同的 taskAffinity
 
 ```xml
-        <activity
-            android:name=".StandardActivity"
-            android:launchMode="standard"
-            android:taskAffinity="task.a" />
-        <activity
-            android:name=".SingleTopActivity"
-            android:launchMode="singleTop"
-            android:taskAffinity="task.b" />
-        <activity
-            android:name=".SingleTaskActivity"
-            android:launchMode="singleTask"
-            android:taskAffinity="task.c" />
-        <activity
-            android:name=".SingleInstanceActivity"
-            android:launchMode="singleInstance"
-            android:taskAffinity="task.d" />
+<activity
+    android:name=".StandardActivity"
+    android:launchMode="standard"
+    android:taskAffinity="task.a" />
+<activity
+    android:name=".SingleTopActivity"
+    android:launchMode="singleTop"
+    android:taskAffinity="task.b" />
+<activity
+    android:name=".SingleTaskActivity"
+    android:launchMode="singleTask"
+    android:taskAffinity="task.c" />
+<activity
+    android:name=".SingleInstanceActivity"
+    android:launchMode="singleInstance"
+    android:taskAffinity="task.d" />
 ```
 
 通过打印 Activity 的 `hashCode()` 方法返回值来判断 Activity 的实例是否被复用了，再通过 `getTaskId()` 方法来判断 Activity 处于哪个任务栈中
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2021/4/16 16:38
+ * @Author: leavesCZY
  * @Desc:
- * @Github：https://github.com/leavesC
+ * @公众号：字节数组
  */
 abstract class BaseLaunchModeActivity : BaseActivity() {
 
@@ -221,17 +220,17 @@ E/SingleTopActivity: onCreate hashCode: 254021317 taskId: 40
 Intent 提供的设置 flag 的方法有以下两个，一个是覆盖设置，一个是增量添加
 
 ```java
-    private int mFlags;
+private int mFlags;
 
-	public @NonNull Intent setFlags(@Flags int flags) {
-        mFlags = flags;
-        return this;
-    }
+public @NonNull Intent setFlags(@Flags int flags) {
+    mFlags = flags;
+    return this;
+}
 
-    public @NonNull Intent addFlags(@Flags int flags) {
-        mFlags |= flags;
-        return this;
-    }
+public @NonNull Intent addFlags(@Flags int flags) {
+    mFlags |= flags;
+    return this;
+}
 ```
 
 通过如下方式来添加 flag 并启动 Activity
@@ -324,7 +323,7 @@ E/SingleInstanceActivity: onDestroy hashCode: 144724929 taskId: 47
 
 关于 Activity 的启动模式的讲解到这里就结束了，最后再强调一遍，launchMode 和 Intent flag 的各种组合效果还是有点过于难理解了，使得我很难全面地进行描述，再加上似乎还存在版本兼容性问题，使用起来就更加麻烦了，所以我觉得开发者只需要有个大致的印象即可，当真正要使用的时候再来亲自测试验证效果就好，不必强行记忆
 
-以上各个示例 Demo 点这里：[AndroidOpenSourceDemo](https://github.com/leavesC/AndroidOpenSourceDemo)
+以上各个示例 Demo 点这里：[AndroidOpenSourceDemo](https://github.com/leavesCZY/AndroidOpenSourceDemo)
 
 # 8、参考资料
 

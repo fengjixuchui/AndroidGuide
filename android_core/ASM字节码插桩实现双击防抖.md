@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -590,6 +590,6 @@ private val extraHookPoints = listOf(
 
 # 结尾
 
-最后也给出完整的源码：[ASM_Transform](https://github.com/leavesC/ASM_Transform)
+最后也给出完整的源码：[ASM_Transform](https://github.com/leavesCZY/ASM_Transform)
 
 这应该会是一个比较好的让读者入门字节码插桩的案例，读者根据项目实际情况进行简单修改后也可以把该双击防抖功能引入到自己项目中

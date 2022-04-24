@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -28,53 +28,53 @@ class ContextImpl extends Context {
 每个 SP 都对应一个本地磁盘中的 xmlFile，fileName 则是由开发者来显式指定的，每个 xmlFile 都对应一个 SharedPreferencesImpl。所以 ContextImpl 的逻辑是先根据 fileName 拿到 xmlFile，再根据 xmlFile 拿到 SharedPreferencesImpl，最终应用内所有的 SharedPreferencesImpl 就都会被缓存在 `sSharedPrefsCache` 这个静态变量中。此外，由于 SharedPreferencesImpl 在初始化后就会自动去加载 xmlFile 中的所有键值对数据，而 ContextImpl 内部并没有看到有清理 `sSharedPrefsCache` 缓存的逻辑，所以 `sSharedPrefsCache` 会被一直保留在内存中直到进程终结，其内存大小会随着我们引用到的 SP 增多而加大，这就可能会持续占用很大一块内存空间
 
 ```java
-    @Override
-    public SharedPreferences getSharedPreferences(String name, int mode) {
-        ···
-        File file;
-        synchronized (ContextImpl.class) {
-            if (mSharedPrefsPaths == null) {
-                mSharedPrefsPaths = new ArrayMap<>();
-            }
-            file = mSharedPrefsPaths.get(name);
-            if (file == null) {
-                file = getSharedPreferencesPath(name);
-                mSharedPrefsPaths.put(name, file);
-            }
+@Override
+public SharedPreferences getSharedPreferences(String name, int mode) {
+    ···
+    File file;
+    synchronized (ContextImpl.class) {
+        if (mSharedPrefsPaths == null) {
+            mSharedPrefsPaths = new ArrayMap<>();
         }
-        return getSharedPreferences(file, mode);
-    }
-    
-    @Override
-    public SharedPreferences getSharedPreferences(File file, int mode) {
-        SharedPreferencesImpl sp;
-        synchronized (ContextImpl.class) {
-            final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
-            sp = cache.get(file);
-            if (sp == null) {
-                ···
-                sp = new SharedPreferencesImpl(file, mode);
-                cache.put(file, sp);
-                return sp;
-            }
+        file = mSharedPrefsPaths.get(name);
+        if (file == null) {
+            file = getSharedPreferencesPath(name);
+            mSharedPrefsPaths.put(name, file);
         }
-        ···
-        return sp;
     }
+    return getSharedPreferences(file, mode);
+}
 
-    @GuardedBy("ContextImpl.class")
-    private ArrayMap<File, SharedPreferencesImpl> getSharedPreferencesCacheLocked() {
-        if (sSharedPrefsCache == null) {
-            sSharedPrefsCache = new ArrayMap<>();
+@Override
+public SharedPreferences getSharedPreferences(File file, int mode) {
+    SharedPreferencesImpl sp;
+    synchronized (ContextImpl.class) {
+        final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
+        sp = cache.get(file);
+        if (sp == null) {
+            ···
+            sp = new SharedPreferencesImpl(file, mode);
+            cache.put(file, sp);
+            return sp;
         }
-        final String packageName = getPackageName();
-        ArrayMap<File, SharedPreferencesImpl> packagePrefs = sSharedPrefsCache.get(packageName);
-        if (packagePrefs == null) {
-            packagePrefs = new ArrayMap<>();
-            sSharedPrefsCache.put(packageName, packagePrefs);
-        }
-        return packagePrefs;
     }
+    ···
+    return sp;
+}
+
+@GuardedBy("ContextImpl.class")
+private ArrayMap<File, SharedPreferencesImpl> getSharedPreferencesCacheLocked() {
+    if (sSharedPrefsCache == null) {
+        sSharedPrefsCache = new ArrayMap<>();
+    }
+    final String packageName = getPackageName();
+    ArrayMap<File, SharedPreferencesImpl> packagePrefs = sSharedPrefsCache.get(packageName);
+    if (packagePrefs == null) {
+        packagePrefs = new ArrayMap<>();
+        sSharedPrefsCache.put(packageName, packagePrefs);
+    }
+    return packagePrefs;
+}
 ```
 
 ## getValue 可能导致线程阻塞
@@ -114,57 +114,57 @@ final class SharedPreferencesImpl implements SharedPreferences {
 而如果我们在初始化 SharedPreferencesImpl 后紧接着就去 getValue 的话，势必也需要确保子线程已经加载完成后才去进行取值操作，所以 SharedPreferencesImpl 就通过在每个 getValue 方法中调用 `awaitLoadedLocked()`方法来判断是否需要阻塞外部线程，确保取值操作一定会在子线程执行完毕后才执行。`loadFromDisk()`方法会在任务执行完毕后调用 `mLock.notifyAll()`唤醒所有被阻塞的线程
 
 ```java
-    @Override
-    @Nullable
-    public String getString(String key, @Nullable String defValue) {
-        synchronized (mLock) {
-            //判断是否需要让外部线程等待
-            awaitLoadedLocked();
-            String v = (String)mMap.get(key);
-            return v != null ? v : defValue;
+@Override
+@Nullable
+public String getString(String key, @Nullable String defValue) {
+    synchronized (mLock) {
+        //判断是否需要让外部线程等待
+        awaitLoadedLocked();
+        String v = (String)mMap.get(key);
+        return v != null ? v : defValue;
+    }
+}
+
+@GuardedBy("mLock")
+private void awaitLoadedLocked() {
+    if (!mLoaded) {
+        BlockGuard.getThreadPolicy().onReadFromDisk();
+    }
+    while (!mLoaded) {
+        try {
+            //还未加载线程，让外部线程暂停等待
+            mLock.wait();
+        } catch (InterruptedException unused) {
         }
     }
-
-    @GuardedBy("mLock")
-    private void awaitLoadedLocked() {
-        if (!mLoaded) {
-            BlockGuard.getThreadPolicy().onReadFromDisk();
-        }
-        while (!mLoaded) {
-            try {
-                //还未加载线程，让外部线程暂停等待
-                mLock.wait();
-            } catch (InterruptedException unused) {
-            }
-        }
-        if (mThrowable != null) {
-            throw new IllegalStateException(mThrowable);
-        }
+    if (mThrowable != null) {
+        throw new IllegalStateException(mThrowable);
     }
+}
 
-    private void loadFromDisk() {
-        ···
-        synchronized (mLock) {
-            mLoaded = true;
-            mThrowable = thrown;
-            try {
-                if (thrown == null) {
-                    if (map != null) {
-                        mMap = map;
-                        mStatTimestamp = stat.st_mtim;
-                        mStatSize = stat.st_size;
-                    } else {
-                        mMap = new HashMap<>();
-                    }
+private void loadFromDisk() {
+    ···
+    synchronized (mLock) {
+        mLoaded = true;
+        mThrowable = thrown;
+        try {
+            if (thrown == null) {
+                if (map != null) {
+                    mMap = map;
+                    mStatTimestamp = stat.st_mtim;
+                    mStatSize = stat.st_size;
+                } else {
+                    mMap = new HashMap<>();
                 }
-            } catch (Throwable t) {
-                mThrowable = t;
-            } finally {
-                //唤醒所有被阻塞的线程
-                mLock.notifyAll();
             }
+        } catch (Throwable t) {
+            mThrowable = t;
+        } finally {
+            //唤醒所有被阻塞的线程
+            mLock.notifyAll();
         }
     }
+}
 ```
 
 所以说，如果 SP 存储的数据量很大的话，那么就有可能导致外部的调用者线程被阻塞，严重时甚至可能导致 ANR。当然，这种可能性也只是发生在加载磁盘文件完成之前，当加载完成后 `awaitLoadedLocked()`方法自然不会阻塞线程
@@ -222,40 +222,40 @@ class ContextImpl extends Context {
 
 ```java
 public final class EditorImpl implements Editor {
-    
-        private final Object mEditorLock = new Object();
 
-        @GuardedBy("mEditorLock")
-        private final Map<String, Object> mModified = new HashMap<>();
+    private final Object mEditorLock = new Object();
 
-        @GuardedBy("mEditorLock")
-        private boolean mClear = false;
-    
-    	@Override
-        public Editor putString(String key, @Nullable String value) {
-            synchronized (mEditorLock) {
-                mModified.put(key, value);
-                return this;
-            }
-        }
-    
-        @Override
-        public Editor remove(String key) {
-            synchronized (mEditorLock) {
-                //存入当前的 EditorImpl 对象
-                mModified.put(key, this);
-                return this;
-            }
-        }
+    @GuardedBy("mEditorLock")
+    private final Map<String, Object> mModified = new HashMap<>();
 
-        @Override
-        public Editor clear() {
-            synchronized (mEditorLock) {
-                mClear = true;
-                return this;
-            }
+    @GuardedBy("mEditorLock")
+    private boolean mClear = false;
+
+    @Override
+    public Editor putString(String key, @Nullable String value) {
+        synchronized (mEditorLock) {
+            mModified.put(key, value);
+            return this;
         }
-    
+    }
+
+    @Override
+    public Editor remove(String key) {
+        synchronized (mEditorLock) {
+            //存入当前的 EditorImpl 对象
+            mModified.put(key, this);
+            return this;
+        }
+    }
+
+    @Override
+    public Editor clear() {
+        synchronized (mEditorLock) {
+            mClear = true;
+            return this;
+        }
+    }
+
 }
 ```
 
@@ -264,82 +264,82 @@ public final class EditorImpl implements Editor {
 `commitToMemory()`采用了 diff 算法，SP 包含的所有键值对数据都存储在 mapToWriteToDisk 中，Editor 改动到的所有键值对数据都存储在 mModified 中。如果  mClear 为 true，则会先清空 mapToWriteToDisk，然后再遍历 mModified，将 mModified 中的所有改动都同步给 mapToWriteToDisk。最终 mapToWriteToDisk 就保存了要重新写入到磁盘文件中的全量数据，SP 会根据 mapToWriteToDisk 完全覆盖掉旧的 xml 文件
 
 ```java
-        // Returns true if any changes were made
-        private MemoryCommitResult commitToMemory() {
-            long memoryStateGeneration;
-            boolean keysCleared = false;
-            List<String> keysModified = null;
-            Set<OnSharedPreferenceChangeListener> listeners = null;
-            Map<String, Object> mapToWriteToDisk;
-            synchronized (SharedPreferencesImpl.this.mLock) {
-                // We optimistically don't make a deep copy until
-                // a memory commit comes in when we're already
-                // writing to disk.
-                if (mDiskWritesInFlight > 0) {
-                    // We can't modify our mMap as a currently
-                    // in-flight write owns it.  Clone it before
-                    // modifying it.
-                    // noinspection unchecked
-                    mMap = new HashMap<String, Object>(mMap);
+// Returns true if any changes were made
+private MemoryCommitResult commitToMemory() {
+    long memoryStateGeneration;
+    boolean keysCleared = false;
+    List<String> keysModified = null;
+    Set<OnSharedPreferenceChangeListener> listeners = null;
+    Map<String, Object> mapToWriteToDisk;
+    synchronized (SharedPreferencesImpl.this.mLock) {
+        // We optimistically don't make a deep copy until
+        // a memory commit comes in when we're already
+        // writing to disk.
+        if (mDiskWritesInFlight > 0) {
+            // We can't modify our mMap as a currently
+            // in-flight write owns it.  Clone it before
+            // modifying it.
+            // noinspection unchecked
+            mMap = new HashMap<String, Object>(mMap);
+        }
+        //拿到内存中的全量数据
+        mapToWriteToDisk = mMap;
+        mDiskWritesInFlight++;
+        boolean hasListeners = mListeners.size() > 0;
+        if (hasListeners) {
+            keysModified = new ArrayList<String>();
+            listeners = new HashSet<OnSharedPreferenceChangeListener>(mListeners.keySet());
+        }
+        synchronized (mEditorLock) {
+            //用于标记最终是否改动到了 mapToWriteToDisk
+            boolean changesMade = false;
+            if (mClear) {
+                if (!mapToWriteToDisk.isEmpty()) {
+                    changesMade = true;
+                    //清空所有在内存中的数据
+                    mapToWriteToDisk.clear();
                 }
-                //拿到内存中的全量数据
-                mapToWriteToDisk = mMap;
-                mDiskWritesInFlight++;
-                boolean hasListeners = mListeners.size() > 0;
+                keysCleared = true;
+                //恢复状态，避免二次修改时状态错位
+                mClear = false;
+            }
+            for (Map.Entry<String, Object> e : mModified.entrySet()) {
+                String k = e.getKey();
+                Object v = e.getValue();
+                // "this" is the magic value for a removal mutation. In addition,
+                // setting a value to "null" for a given key is specified to be
+                // equivalent to calling remove on that key.
+                if (v == this || v == null) { //意味着要移除该键值对
+                    if (!mapToWriteToDisk.containsKey(k)) {
+                        continue;
+                    }
+                    mapToWriteToDisk.remove(k);
+                } else { //对应修改键值对值的情况
+                    if (mapToWriteToDisk.containsKey(k)) {
+                        Object existingValue = mapToWriteToDisk.get(k);
+                        if (existingValue != null && existingValue.equals(v)) {
+                            continue;
+                        }
+                    }
+                    //只有在的确是修改了或新插入键值对的情况才需要保存值
+                    mapToWriteToDisk.put(k, v);
+                }
+                changesMade = true;
                 if (hasListeners) {
-                    keysModified = new ArrayList<String>();
-                    listeners = new HashSet<OnSharedPreferenceChangeListener>(mListeners.keySet());
-                }
-                synchronized (mEditorLock) {
-                    //用于标记最终是否改动到了 mapToWriteToDisk
-                    boolean changesMade = false;
-                    if (mClear) {
-                        if (!mapToWriteToDisk.isEmpty()) {
-                            changesMade = true;
-                            //清空所有在内存中的数据
-                            mapToWriteToDisk.clear();
-                        }
-                        keysCleared = true;
-                        //恢复状态，避免二次修改时状态错位
-                        mClear = false;
-                    }
-                    for (Map.Entry<String, Object> e : mModified.entrySet()) {
-                        String k = e.getKey();
-                        Object v = e.getValue();
-                        // "this" is the magic value for a removal mutation. In addition,
-                        // setting a value to "null" for a given key is specified to be
-                        // equivalent to calling remove on that key.
-                        if (v == this || v == null) { //意味着要移除该键值对
-                            if (!mapToWriteToDisk.containsKey(k)) {
-                                continue;
-                            }
-                            mapToWriteToDisk.remove(k);
-                        } else { //对应修改键值对值的情况
-                            if (mapToWriteToDisk.containsKey(k)) {
-                                Object existingValue = mapToWriteToDisk.get(k);
-                                if (existingValue != null && existingValue.equals(v)) {
-                                    continue;
-                                }
-                            }
-                            //只有在的确是修改了或新插入键值对的情况才需要保存值
-                            mapToWriteToDisk.put(k, v);
-                        }
-                        changesMade = true;
-                        if (hasListeners) {
-                            keysModified.add(k);
-                        }
-                    }
-                    //恢复状态，避免二次修改时状态错位
-                    mModified.clear();
-                    if (changesMade) {
-                        mCurrentMemoryStateGeneration++;
-                    }
-                    memoryStateGeneration = mCurrentMemoryStateGeneration;
+                    keysModified.add(k);
                 }
             }
-            return new MemoryCommitResult(memoryStateGeneration, keysCleared, keysModified,
-                    listeners, mapToWriteToDisk);
+            //恢复状态，避免二次修改时状态错位
+            mModified.clear();
+            if (changesMade) {
+                mCurrentMemoryStateGeneration++;
+            }
+            memoryStateGeneration = mCurrentMemoryStateGeneration;
         }
+    }
+    return new MemoryCommitResult(memoryStateGeneration, keysCleared, keysModified,
+            listeners, mapToWriteToDisk);
+}
 ```
 
 ## clear 的反直觉用法
@@ -358,81 +358,81 @@ edit.apply()
 所以说，`Editor.clear()` 之前不应该连贯调用 putValue 语句，这会造成理解和实际效果之间的偏差
 
 ```java
-        // Returns true if any changes were made
-        private MemoryCommitResult commitToMemory() {
-            long memoryStateGeneration;
-            boolean keysCleared = false;
-            List<String> keysModified = null;
-            Set<OnSharedPreferenceChangeListener> listeners = null;
-            Map<String, Object> mapToWriteToDisk;
-            synchronized (SharedPreferencesImpl.this.mLock) {
-                // We optimistically don't make a deep copy until
-                // a memory commit comes in when we're already
-                // writing to disk.
-                if (mDiskWritesInFlight > 0) {
-                    // We can't modify our mMap as a currently
-                    // in-flight write owns it.  Clone it before
-                    // modifying it.
-                    // noinspection unchecked
-                    mMap = new HashMap<String, Object>(mMap);
+// Returns true if any changes were made
+private MemoryCommitResult commitToMemory() {
+    long memoryStateGeneration;
+    boolean keysCleared = false;
+    List<String> keysModified = null;
+    Set<OnSharedPreferenceChangeListener> listeners = null;
+    Map<String, Object> mapToWriteToDisk;
+    synchronized (SharedPreferencesImpl.this.mLock) {
+        // We optimistically don't make a deep copy until
+        // a memory commit comes in when we're already
+        // writing to disk.
+        if (mDiskWritesInFlight > 0) {
+            // We can't modify our mMap as a currently
+            // in-flight write owns it.  Clone it before
+            // modifying it.
+            // noinspection unchecked
+            mMap = new HashMap<String, Object>(mMap);
+        }
+        //拿到内存中的全量数据
+        mapToWriteToDisk = mMap;
+        mDiskWritesInFlight++;
+        boolean hasListeners = mListeners.size() > 0;
+        if (hasListeners) {
+            keysModified = new ArrayList<String>();
+            listeners = new HashSet<OnSharedPreferenceChangeListener>(mListeners.keySet());
+        }
+        synchronized (mEditorLock) {
+            boolean changesMade = false;
+            if (mClear) { //第一步
+                if (!mapToWriteToDisk.isEmpty()) {
+                    changesMade = true;
+                    //清空所有在内存中的数据
+                    mapToWriteToDisk.clear();
                 }
-                //拿到内存中的全量数据
-                mapToWriteToDisk = mMap;
-                mDiskWritesInFlight++;
-                boolean hasListeners = mListeners.size() > 0;
+                keysCleared = true;
+                //恢复状态，避免二次修改时状态错位
+                mClear = false;
+            }
+            for (Map.Entry<String, Object> e : mModified.entrySet()) { //第二步
+                String k = e.getKey();
+                Object v = e.getValue();
+                // "this" is the magic value for a removal mutation. In addition,
+                // setting a value to "null" for a given key is specified to be
+                // equivalent to calling remove on that key.
+                if (v == this || v == null) { //意味着要移除该键值对
+                    if (!mapToWriteToDisk.containsKey(k)) {
+                        continue;
+                    }
+                    mapToWriteToDisk.remove(k);
+                } else { //对应修改键值对值的情况
+                    if (mapToWriteToDisk.containsKey(k)) {
+                        Object existingValue = mapToWriteToDisk.get(k);
+                        if (existingValue != null && existingValue.equals(v)) {
+                            continue;
+                        }
+                    }
+                    //只有在的确是修改了或新插入键值对的情况才需要保存值
+                    mapToWriteToDisk.put(k, v);
+                }
+                changesMade = true;
                 if (hasListeners) {
-                    keysModified = new ArrayList<String>();
-                    listeners = new HashSet<OnSharedPreferenceChangeListener>(mListeners.keySet());
-                }
-                synchronized (mEditorLock) {
-                    boolean changesMade = false;
-                    if (mClear) { //第一步
-                        if (!mapToWriteToDisk.isEmpty()) {
-                            changesMade = true;
-                            //清空所有在内存中的数据
-                            mapToWriteToDisk.clear();
-                        }
-                        keysCleared = true;
-                        //恢复状态，避免二次修改时状态错位
-                        mClear = false;
-                    }
-                    for (Map.Entry<String, Object> e : mModified.entrySet()) { //第二步
-                        String k = e.getKey();
-                        Object v = e.getValue();
-                        // "this" is the magic value for a removal mutation. In addition,
-                        // setting a value to "null" for a given key is specified to be
-                        // equivalent to calling remove on that key.
-                        if (v == this || v == null) { //意味着要移除该键值对
-                            if (!mapToWriteToDisk.containsKey(k)) {
-                                continue;
-                            }
-                            mapToWriteToDisk.remove(k);
-                        } else { //对应修改键值对值的情况
-                            if (mapToWriteToDisk.containsKey(k)) {
-                                Object existingValue = mapToWriteToDisk.get(k);
-                                if (existingValue != null && existingValue.equals(v)) {
-                                    continue;
-                                }
-                            }
-                            //只有在的确是修改了或新插入键值对的情况才需要保存值
-                            mapToWriteToDisk.put(k, v);
-                        }
-                        changesMade = true;
-                        if (hasListeners) {
-                            keysModified.add(k);
-                        }
-                    }
-                    //恢复状态，避免二次修改时状态错位
-                    mModified.clear();
-                    if (changesMade) {
-                        mCurrentMemoryStateGeneration++;
-                    }
-                    memoryStateGeneration = mCurrentMemoryStateGeneration;
+                    keysModified.add(k);
                 }
             }
-            return new MemoryCommitResult(memoryStateGeneration, keysCleared, keysModified,
-                    listeners, mapToWriteToDisk);
+            //恢复状态，避免二次修改时状态错位
+            mModified.clear();
+            if (changesMade) {
+                mCurrentMemoryStateGeneration++;
+            }
+            memoryStateGeneration = mCurrentMemoryStateGeneration;
         }
+    }
+    return new MemoryCommitResult(memoryStateGeneration, keysCleared, keysModified,
+            listeners, mapToWriteToDisk);
+}
 ```
 
 ## commit、applay 可能导致 ANR
@@ -440,32 +440,32 @@ edit.apply()
 `commit()` 方法会通过 `commitToMemory()` 方法拿到本次修改后的全量数据，即 MemoryCommitResult，然后向 `enqueueDiskWrite` 方法提交将全量数据写入磁盘文件的任务，在写入完成前调用者线程都会由于 CountDownLatch 一直阻塞等待着，方法返回值即本次修改操作的成功状态
 
 ```java
-        @Override
-        public boolean commit() {
-            long startTime = 0;
-            if (DEBUG) {
-                startTime = System.currentTimeMillis();
-            }
-		   //拿到修改后的全量数据
-            MemoryCommitResult mcr = commitToMemory();
-		   //提交写入磁盘文件的任务
-            SharedPreferencesImpl.this.enqueueDiskWrite(
-                mcr, null /* sync write on this thread okay */);
-            try {
-                //阻塞等待，直到 xml 文件写入完成（不管成功与否）
-                mcr.writtenToDiskLatch.await();
-            } catch (InterruptedException e) {
-                return false;
-            } finally {
-                if (DEBUG) {
-                    Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
-                            + " committed after " + (System.currentTimeMillis() - startTime)
-                            + " ms");
-                }
-            }
-            notifyListeners(mcr);
-            return mcr.writeToDiskResult;
+@Override
+public boolean commit() {
+    long startTime = 0;
+    if (DEBUG) {
+        startTime = System.currentTimeMillis();
+    }
+   //拿到修改后的全量数据
+    MemoryCommitResult mcr = commitToMemory();
+   //提交写入磁盘文件的任务
+    SharedPreferencesImpl.this.enqueueDiskWrite(
+        mcr, null /* sync write on this thread okay */);
+    try {
+        //阻塞等待，直到 xml 文件写入完成（不管成功与否）
+        mcr.writtenToDiskLatch.await();
+    } catch (InterruptedException e) {
+        return false;
+    } finally {
+        if (DEBUG) {
+            Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
+                    + " committed after " + (System.currentTimeMillis() - startTime)
+                    + " ms");
         }
+    }
+    notifyListeners(mcr);
+    return mcr.writeToDiskResult;
+}
 ```
 
 `enqueueDiskWrite` 方法就是包含了具体的磁盘写入逻辑的地方了，由于外部可能存在多个线程在同时执行 `apply()` 和 `commit()` 两个方法，而对应的磁盘文件只有一个，所以 `enqueueDiskWrite` 方法就必须保证写入操作的有序性，避免数据丢失或者覆盖，甚至是文件损坏
@@ -478,105 +478,105 @@ edit.apply()
 4. QueuedWork 内部使用到了 HandlerThread 来执行 writeToDiskRunnable，HandlerThread 本身也可以保证多个任务执行时的有序性
 
 ```java
-    private void enqueueDiskWrite(final MemoryCommitResult mcr,
-                                  final Runnable postWriteRunnable) {
-        final boolean isFromSyncCommit = (postWriteRunnable == null);
-        final Runnable writeToDiskRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (mWritingToDiskLock) {
-                        //写入磁盘文件
-                        writeToFile(mcr, isFromSyncCommit);
-                    }
-                    synchronized (mLock) {
-                        mDiskWritesInFlight--;
-                    }
-                    if (postWriteRunnable != null) {
-                        postWriteRunnable.run();
-                    }
+private void enqueueDiskWrite(final MemoryCommitResult mcr,
+                              final Runnable postWriteRunnable) {
+    final boolean isFromSyncCommit = (postWriteRunnable == null);
+    final Runnable writeToDiskRunnable = new Runnable() {
+            @Override
+            public void run() {
+                synchronized (mWritingToDiskLock) {
+                    //写入磁盘文件
+                    writeToFile(mcr, isFromSyncCommit);
                 }
-            };
-        // Typical #commit() path with fewer allocations, doing a write on
-        // the current thread.
-        if (isFromSyncCommit) { //commit() 方法会走进这里面
-            boolean wasEmpty = false;
-            synchronized (mLock) {
-                wasEmpty = mDiskWritesInFlight == 1;
+                synchronized (mLock) {
+                    mDiskWritesInFlight--;
+                }
+                if (postWriteRunnable != null) {
+                    postWriteRunnable.run();
+                }
             }
-            if (wasEmpty) {
-                //wasEmpty 为 true 说明当前只有一个线程在执行提交操作，那么就直接在此线程上完成任务
-                writeToDiskRunnable.run();
-                return;
-            }
+        };
+    // Typical #commit() path with fewer allocations, doing a write on
+    // the current thread.
+    if (isFromSyncCommit) { //commit() 方法会走进这里面
+        boolean wasEmpty = false;
+        synchronized (mLock) {
+            wasEmpty = mDiskWritesInFlight == 1;
         }
-        QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+        if (wasEmpty) {
+            //wasEmpty 为 true 说明当前只有一个线程在执行提交操作，那么就直接在此线程上完成任务
+            writeToDiskRunnable.run();
+            return;
+        }
     }
+    QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+}
 ```
 
 此外，还有一个比较重要的知识点需要注意下。在 writeToFile 方法中会对本次任务进行校验，避免连续多次执行无效的磁盘任务。当中，mDiskStateGeneration 代表的是最后一次成功写入磁盘文件时的任务版本号，mCurrentMemoryStateGeneration 是当前内存中最新的修改记录版本号，mcr.memoryStateGeneration 是本次要执行的任务的版本号。通过两次版本号的对比，就避免了在连续多次 commit 或者 apply 时造成重复执行 I/O 操作的情况，而是只会执行最后一次，避免了无效的 I/O 任务
 
 ```java
-    @GuardedBy("mWritingToDiskLock")
-    private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
-        ···
-        if (fileExists) {
-            boolean needsWrite = false;
+@GuardedBy("mWritingToDiskLock")
+private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
+    ···
+    if (fileExists) {
+        boolean needsWrite = false;
 
-            // Only need to write if the disk state is older than this commit
-            //判断版本号
-            if (mDiskStateGeneration < mcr.memoryStateGeneration) {
-                if (isFromSyncCommit) {
-                    needsWrite = true;
-                } else {
-                    synchronized (mLock) {
-                        // No need to persist intermediate states. Just wait for the latest state to
-                        // be persisted.
-                        //判断版本号
-                        if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
-                            needsWrite = true;
-                        }
+        // Only need to write if the disk state is older than this commit
+        //判断版本号
+        if (mDiskStateGeneration < mcr.memoryStateGeneration) {
+            if (isFromSyncCommit) {
+                needsWrite = true;
+            } else {
+                synchronized (mLock) {
+                    // No need to persist intermediate states. Just wait for the latest state to
+                    // be persisted.
+                    //判断版本号
+                    if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
+                        needsWrite = true;
                     }
                 }
             }
-			
-            if (!needsWrite) {
-                //当前版本号并非最新，无需执行，直接返回即可
-                mcr.setDiskWriteResult(false, true);
-                return;
-            }
-        ···
-    }
+        }
+
+        if (!needsWrite) {
+            //当前版本号并非最新，无需执行，直接返回即可
+            mcr.setDiskWriteResult(false, true);
+            return;
+        }
+    ···
+}
 ```
 
 再回过头看 `commit()` 方法。不管该方法关联的 writeToDiskRunnable 最终是在本线程还是 HandlerThread 中执行，`await()`方法都会使得本线程阻塞等待直到 writeToDiskRunnable 执行完毕，从而实现了 `commit()`同步提交的效果
 
 ```java
-        @Override
-        public boolean commit() {
-            long startTime = 0;
-            if (DEBUG) {
-                startTime = System.currentTimeMillis();
-            }
-		   //拿到修改后的全量数据
-            MemoryCommitResult mcr = commitToMemory();
-		   //提交写入磁盘文件的任务
-            SharedPreferencesImpl.this.enqueueDiskWrite(
-                mcr, null /* sync write on this thread okay */);
-            try {
-                //阻塞等待，直到 xml 文件写入完成（不管成功与否）
-                mcr.writtenToDiskLatch.await();
-            } catch (InterruptedException e) {
-                return false;
-            } finally {
-                if (DEBUG) {
-                    Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
-                            + " committed after " + (System.currentTimeMillis() - startTime)
-                            + " ms");
-                }
-            }
-            notifyListeners(mcr);
-            return mcr.writeToDiskResult;
+@Override
+public boolean commit() {
+    long startTime = 0;
+    if (DEBUG) {
+        startTime = System.currentTimeMillis();
+    }
+   //拿到修改后的全量数据
+    MemoryCommitResult mcr = commitToMemory();
+   //提交写入磁盘文件的任务
+    SharedPreferencesImpl.this.enqueueDiskWrite(
+        mcr, null /* sync write on this thread okay */);
+    try {
+        //阻塞等待，直到 xml 文件写入完成（不管成功与否）
+        mcr.writtenToDiskLatch.await();
+    } catch (InterruptedException e) {
+        return false;
+    } finally {
+        if (DEBUG) {
+            Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
+                    + " committed after " + (System.currentTimeMillis() - startTime)
+                    + " ms");
         }
+    }
+    notifyListeners(mcr);
+    return mcr.writeToDiskResult;
+}
 ```
 
 而对于 `apply()` 方法，其本身具有异步提交的含义，I/O 操作应该都是交由给了子线程来执行才对，按道理来说只需要调用 `enqueueDiskWrite` 方法提交任务且不等待任务完成即可，可实际上`apply()`方法反而要比`commit()`方法复杂得多
@@ -584,47 +584,47 @@ edit.apply()
 `apply()`方法包含一个 awaitCommit 任务，用于阻塞其执行线程直到磁盘任务执行完毕，而 awaitCommit 又被包裹在 postWriteRunnable 中一起提交给了 `enqueueDiskWrite` 方法，`enqueueDiskWrite` 方法又会在 writeToDiskRunnable 执行完毕后执行 enqueueDiskWrite
 
 ```java
-        @Override
-        public void apply() {
-            final long startTime = System.currentTimeMillis();
+@Override
+public void apply() {
+    final long startTime = System.currentTimeMillis();
 
-            final MemoryCommitResult mcr = commitToMemory();
-            final Runnable awaitCommit = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            //阻塞线程直到磁盘任务执行完毕
-                            mcr.writtenToDiskLatch.await();
-                        } catch (InterruptedException ignored) {
-                        }
+    final MemoryCommitResult mcr = commitToMemory();
+    final Runnable awaitCommit = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    //阻塞线程直到磁盘任务执行完毕
+                    mcr.writtenToDiskLatch.await();
+                } catch (InterruptedException ignored) {
+                }
 
-                        if (DEBUG && mcr.wasWritten) {
-                            Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
-                                    + " applied after " + (System.currentTimeMillis() - startTime)
-                                    + " ms");
-                        }
-                    }
-                };
+                if (DEBUG && mcr.wasWritten) {
+                    Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
+                            + " applied after " + (System.currentTimeMillis() - startTime)
+                            + " ms");
+                }
+            }
+        };
 
-            QueuedWork.addFinisher(awaitCommit);
+    QueuedWork.addFinisher(awaitCommit);
 
-            Runnable postWriteRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        awaitCommit.run();
-                        QueuedWork.removeFinisher(awaitCommit);
-                    }
-                };
+    Runnable postWriteRunnable = new Runnable() {
+            @Override
+            public void run() {
+                awaitCommit.run();
+                QueuedWork.removeFinisher(awaitCommit);
+            }
+        };
 
-            //提交任务
-            SharedPreferencesImpl.this.enqueueDiskWrite(mcr, postWriteRunnable);
+    //提交任务
+    SharedPreferencesImpl.this.enqueueDiskWrite(mcr, postWriteRunnable);
 
-            // Okay to notify the listeners before it's hit disk
-            // because the listeners should always get the same
-            // SharedPreferences instance back, which has the
-            // changes reflected in memory.
-            notifyListeners(mcr);
-        }
+    // Okay to notify the listeners before it's hit disk
+    // because the listeners should always get the same
+    // SharedPreferences instance back, which has the
+    // changes reflected in memory.
+    notifyListeners(mcr);
+}
 ```
 
 单独看以上逻辑会显得十分奇怪，从上文就可以得知 writeToDiskRunnable 最终是会交由 HandlerThread 来执行的，那按照流程看 awaitCommit 最终也是会由 HandlerThread 调用，那么 awaitCommit 的等待操作就显得十分奇怪了，因为 awaitCommit 肯定是会在磁盘任务执行完毕才被调用，就相当于 HandlerThread  在自己等待自己执行完毕。此外，HandlerThread 属于子线程，按道理来说子线程即使执行了耗时操作也不会导致主线程 ANR 才对
@@ -632,76 +632,76 @@ edit.apply()
 要理解以上操作，还需要再看看 ActivityThread 这个类。当 Service 和 Activity 的生命周期处于 `handleStopService()` 、`handlePauseActivity()` 、`handleStopActivity()` 的时候，ActivityThread 会调用 `QueuedWork.waitToFinish()` 方法
 
 ```java
-    private void handleStopService(IBinder token) {
-        Service s = mServices.remove(token);
-        if (s != null) {
-            try {
-                ···
-                //重点
-                QueuedWork.waitToFinish();
-                ···
-            } catch (Exception e) {
-                ···
-            }
-        } else {
-            Slog.i(TAG, "handleStopService: token=" + token + " not found.");
+private void handleStopService(IBinder token) {
+    Service s = mServices.remove(token);
+    if (s != null) {
+        try {
+            ···
+            //重点
+            QueuedWork.waitToFinish();
+            ···
+        } catch (Exception e) {
+            ···
         }
-        //Slog.i(TAG, "Running services: " + mServices);
+    } else {
+        Slog.i(TAG, "handleStopService: token=" + token + " not found.");
     }
+    //Slog.i(TAG, "Running services: " + mServices);
+}
 ```
 
 `QueuedWork.waitToFinish()` 方法会主动去执行所有的磁盘写入任务，并执行所有的 postWriteRunnable，这就造成了 Activity 或 Service 在切换生命周期的过程中有可能因为存在大量的磁盘写入任务而被阻塞住，最终导致 ANR
 
 ```java
-    public static void waitToFinish() {
-        long startTime = System.currentTimeMillis();
-        boolean hadMessages = false;
-        Handler handler = getHandler();
-        synchronized (sLock) {
-            if (handler.hasMessages(QueuedWorkHandler.MSG_RUN)) {
-                // Delayed work will be processed at processPendingWork() below
-                handler.removeMessages(QueuedWorkHandler.MSG_RUN);
-                if (DEBUG) {
-                    hadMessages = true;
-                    Log.d(LOG_TAG, "waiting");
-                }
+public static void waitToFinish() {
+    long startTime = System.currentTimeMillis();
+    boolean hadMessages = false;
+    Handler handler = getHandler();
+    synchronized (sLock) {
+        if (handler.hasMessages(QueuedWorkHandler.MSG_RUN)) {
+            // Delayed work will be processed at processPendingWork() below
+            handler.removeMessages(QueuedWorkHandler.MSG_RUN);
+            if (DEBUG) {
+                hadMessages = true;
+                Log.d(LOG_TAG, "waiting");
             }
-            // We should not delay any work as this might delay the finishers
-            sCanDelay = false;
         }
-        StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskWrites();
-        try {
-            //执行所有的磁盘写入任务
-            processPendingWork();
-        } finally {
-            StrictMode.setThreadPolicy(oldPolicy);
-        }
-        try {
-            //执行所有的 postWriteRunnable
-            while (true) {
-                Runnable finisher;
-                synchronized (sLock) {
-                    finisher = sFinishers.poll();
-                }
-                if (finisher == null) {
-                    break;
-                }
-                finisher.run();
+        // We should not delay any work as this might delay the finishers
+        sCanDelay = false;
+    }
+    StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskWrites();
+    try {
+        //执行所有的磁盘写入任务
+        processPendingWork();
+    } finally {
+        StrictMode.setThreadPolicy(oldPolicy);
+    }
+    try {
+        //执行所有的 postWriteRunnable
+        while (true) {
+            Runnable finisher;
+            synchronized (sLock) {
+                finisher = sFinishers.poll();
             }
-        } finally {
-            sCanDelay = true;
+            if (finisher == null) {
+                break;
+            }
+            finisher.run();
         }
-        synchronized (sLock) {
-            long waitTime = System.currentTimeMillis() - startTime;
-            if (waitTime > 0 || hadMessages) {
-                mWaitTimes.add(Long.valueOf(waitTime).intValue());
-                mNumWaits++;
-                if (DEBUG || mNumWaits % 1024 == 0 || waitTime > MAX_WAIT_TIME_MILLIS) {
-                    mWaitTimes.log(LOG_TAG, "waited: ");
-                }
+    } finally {
+        sCanDelay = true;
+    }
+    synchronized (sLock) {
+        long waitTime = System.currentTimeMillis() - startTime;
+        if (waitTime > 0 || hadMessages) {
+            mWaitTimes.add(Long.valueOf(waitTime).intValue());
+            mNumWaits++;
+            if (DEBUG || mNumWaits % 1024 == 0 || waitTime > MAX_WAIT_TIME_MILLIS) {
+                mWaitTimes.log(LOG_TAG, "waited: ");
             }
         }
     }
+}
 ```
 
 ActivityThread 为什么要主动去触发执行所有的磁盘写入任务我无从得知，字节技术跳动团队给出的猜测是：**Google 在 Activity 和 Service 调用 onStop 之前阻塞主线程来处理 SP，我们能猜到的唯一原因是尽可能的保证数据的持久化。因为如果在运行过程中产生了 crash，也会导致 SP 未持久化，持久化本身是 IO 操作，也会失败**
@@ -983,8 +983,8 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.github.leavesC:KVHolder:latest_version'
+    implementation 'com.github.leavesCZY:KVHolder:latest_version'
 }
 ```
 
-GitHub 点击这里：[KVHolder](https://github.com/leavesC/KVHolder)
+GitHub 点击这里：[KVHolder](https://github.com/leavesCZY/KVHolder)

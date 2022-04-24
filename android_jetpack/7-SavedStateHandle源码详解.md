@@ -1,38 +1,35 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
-> 希望对你有所帮助 🤣🤣
-
-> 对于现在的 Android Developer 来说，Google Jetpack 可以说是最为基础的架构组件之一了，自从推出以后极大地改变了我们的开发模式并降低了开发难度，这也要求我们对当中一些子组件的实现原理具有一定程度的了解，所以我就打算来写一系列关于 Jetpack 源码解析的文章，希望对你有所帮助 🤣🤣
-
-本文所讲的源码基于以下依赖库当前的最新版本：
-
-```groovy
-compileSdkVersion 30
-
-implementation 'androidx.appcompat:appcompat:1.3.0-beta01'
-implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.0"
-implementation "androidx.savedstate:savedstate:1.1.0"
-```
+> Google Jetpack 自从推出以后，极大地改变了 Android 开发者们的开发模式，并降低了开发难度。这也要求我们对当中一些子组件的实现原理具有一定的了解，所以我就打算来写一系列 Jetpack 源码解析的文章，希望对你有所帮助 🤣🤣🤣
 
 我们知道，Activity 意外销毁的情况可以分为两种：
 
 1. 由于屏幕旋转等配置更改的原因导致 Activity 被销毁
 2. 由于系统资源限制导致 Activity 被销毁
 
-对于这两种情况，我们当然希望 Activity 重建后之前**加载的数据**以及**用户状态**都能够得到恢复，每种情况目前有着不同的恢复方法
+对于这两种情况，我们当然希望 Activity 重建后之前 **加载的数据** 以及 **用户状态** 都能够得到恢复，每种情况目前有着不同的恢复方法
 
-- 对于第一种情况，Jetpack 提供了 ViewModel 来解决这个问题。ViewModel 可以在配置更改后继续存留，适合用于在内存中存储比较复杂或者量比较大的数据，例如，用 RecyclerView 加载的多个列表项对应的 Data。**但当第二种情况发生时 ViewModel 是无法被保留下来的，Activity 重建后也只会得到一个新的 ViewModel 实例，并且之前已经加载的数据也会丢失**。关于 ViewModel 的源码详解可以看我的另一篇文章：[从源码看 Jetpack（6）-ViewModel 源码详解](https://juejin.im/post/6873356946896846856)
+- 对于第一种情况，Jetpack 提供了 ViewModel 来解决这个问题。ViewModel 可以在配置更改后继续存留，适合用于在内存中存储比较复杂或者量比较大的数据，例如，用 RecyclerView 加载的多个列表项对应的 Data。**但当第二种情况发生时 ViewModel 是无法被保留下来的，Activity 重建后也只会得到一个新的 ViewModel 实例，并且之前已经加载的数据也会丢失**。关于 ViewModel 的源码详解可以看我的另一篇文章：[从源码看 Jetpack（6）- ViewModel 源码详解](https://juejin.im/post/6873356946896846856)
 - 对于第二种情况，需要依赖于 Activity 原生提供的数据保存及恢复机制，即依赖以下两类方法来实现数据保存和数据恢复
   - onSaveInstanceState(Bundle)。通过向 Bundle 插入键值对来保存数据，数据在上述两种情况发生时都会被保留下来，但该方法也有着存储容量和存取效率的限制。Bundle 有着容量限制，不适合用于存储大量数据，而且是通过将数据序列化到磁盘来进行保存的，所以如果要保存的数据很复杂或者很大，序列化就会消耗大量的内存和时间。因此 `onSaveInstanceState` 方法仅适合用于存储少量简单类型的数据
   - onCreate(Bundle) 或者 onRestoreInstanceState(Bundle)。用于从 Bundle 中取出数据进行状态恢复
 
 Google 官方也对这两种情况进行了对比：
 
-![](https://s1.ax1x.com/2020/09/19/w5Xbuj.png)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/00b6ddc7920f4a84bbf2c5ec0e0175e8~tplv-k3u1fbpfcp-zoom-1.image)
 
 对于第二种情况，数据的保存和恢复流程被限制在了 Activity 的特定方法里，我们无法直接在 ViewModel 中决定哪些数据需要被保留，也无法直接拿到恢复后的数据，使得整个重建流程和 ViewModel 分裂开了
 
-为了解决这个问题，Jetpack 提供了 SavedStateHandle 这么一个组件，可以看做是对 ViewModel 的功能扩展，使得开发者可以直接在 ViewModel 中直接操作整个数据的重建过程
+为了解决这个问题，Jetpack 提供了 SavedStateHandle 这么一个组件，可以看做是对 ViewModel 的功能扩展，使得开发者可以直接在 ViewModel 中直接操作整个数据的重建过程，本文要介绍的就是 SavedStateHandle 的使用方式和实现原理
+
+本文内容基于以下版本来进行讲解
+
+```kotlin
+compileSdkVersion 30
+implementation 'androidx.appcompat:appcompat:1.3.0-beta01'
+implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.0"
+implementation "androidx.savedstate:savedstate:1.1.0"
+```
 
 # 一、使用示例
 
@@ -46,10 +43,8 @@ SavedStateHandle 的引入使得开发者无需直接使用 `onSaveInstanceState
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/9/19 15:21
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 class SavedStateViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
@@ -232,23 +227,23 @@ SavedStateRegistry 是实际进行保存和恢复数据的地方，那么很自�
 外部需要实现 SavedStateProvider 接口，在 `saveState()`返回想要保存的数据，然后调用`registerSavedStateProvider` 方法将 SavedStateProvider 对象提交给 SavedStateRegistry。因为并不是所有 Activity 被销毁的情况都需要进行数据的保存和恢复操作，例如用户按返回键退出 Activity 的时候就不需要保存数据，所以 `saveState()` 方法仅会在需要的时候才会被调用
 
 ```java
-    private SafeIterableMap<String, SavedStateProvider> mComponents = new SafeIterableMap<>();   
-	
-	//外部通过一个唯一标识 key 来和要保存的数据 Bundle 相对应，后续也通过这个 key 来恢复数据
-	@MainThread
-    public void registerSavedStateProvider(@NonNull String key,
-            @NonNull SavedStateProvider provider) {
-        SavedStateProvider previous = mComponents.putIfAbsent(key, provider);
-        if (previous != null) {
-            throw new IllegalArgumentException("SavedStateProvider with the given key is"
-                    + " already registered");
-        }
-    }
+private SafeIterableMap<String, SavedStateProvider> mComponents = new SafeIterableMap<>();   
 
-    public interface SavedStateProvider {
-        @NonNull
-        Bundle saveState();
+//外部通过一个唯一标识 key 来和要保存的数据 Bundle 相对应，后续也通过这个 key 来恢复数据
+@MainThread
+public void registerSavedStateProvider(@NonNull String key,
+        @NonNull SavedStateProvider provider) {
+    SavedStateProvider previous = mComponents.putIfAbsent(key, provider);
+    if (previous != null) {
+        throw new IllegalArgumentException("SavedStateProvider with the given key is"
+                + " already registered");
     }
+}
+
+public interface SavedStateProvider {
+    @NonNull
+    Bundle saveState();
+}
 ```
 
 ## 保存数据
@@ -260,28 +255,28 @@ SavedStateRegistry 是实际进行保存和恢复数据的地方，那么很自�
 3. 将 components 保存到 `onSaveInstanceState` 方法传来的 Bundle 对象里，从而完成数据的保存操作
 
 ```java
-   private static final String SAVED_COMPONENTS_KEY =
-            "androidx.lifecycle.BundlableSavedStateRegistry.key";
+private static final String SAVED_COMPONENTS_KEY =
+        "androidx.lifecycle.BundlableSavedStateRegistry.key";
 
-    @Nullable
-    private Bundle mRestoredState;
+@Nullable
+private Bundle mRestoredState;
 
-	@MainThread
-    void performSave(@NonNull Bundle outBundle) {
-        Bundle components = new Bundle();
-        if (mRestoredState != null) {
-            //步骤1
-            components.putAll(mRestoredState);
-        }
-        //步骤2
-        for (Iterator<Map.Entry<String, SavedStateProvider>> it =
-                mComponents.iteratorWithAdditions(); it.hasNext(); ) {
-            Map.Entry<String, SavedStateProvider> entry1 = it.next();
-            components.putBundle(entry1.getKey(), entry1.getValue().saveState());
-        }
-        //步骤3
-        outBundle.putBundle(SAVED_COMPONENTS_KEY, components);
+@MainThread
+void performSave(@NonNull Bundle outBundle) {
+    Bundle components = new Bundle();
+    if (mRestoredState != null) {
+        //步骤1
+        components.putAll(mRestoredState);
     }
+    //步骤2
+    for (Iterator<Map.Entry<String, SavedStateProvider>> it =
+            mComponents.iteratorWithAdditions(); it.hasNext(); ) {
+        Map.Entry<String, SavedStateProvider> entry1 = it.next();
+        components.putBundle(entry1.getKey(), entry1.getValue().saveState());
+    }
+    //步骤3
+    outBundle.putBundle(SAVED_COMPONENTS_KEY, components);
+}
 ```
 
 ## 恢复数据
@@ -292,38 +287,38 @@ SavedStateRegistry 是实际进行保存和恢复数据的地方，那么很自�
 2. 通过监听 Lifecycle 来确定当前是否处于可以恢复数据的生命周期阶段，用一个布尔变量 `mAllowingSavingState` 来标记
 
 ```java
-	private boolean mRestored;
+private boolean mRestored;
 
-    boolean mAllowingSavingState = true;
+boolean mAllowingSavingState = true;
 
-    @Nullable
-    private Bundle mRestoredState;
-    
-    @MainThread
-    void performRestore(@NonNull Lifecycle lifecycle, @Nullable Bundle savedState) {
-        if (mRestored) {
-            //不应该重复恢复数据
-            throw new IllegalStateException("SavedStateRegistry was already restored.");
-        }
-        if (savedState != null) {
-            //步骤1
-            mRestoredState = savedState.getBundle(SAVED_COMPONENTS_KEY);
-        }
-		
-        //步骤2
-        lifecycle.addObserver(new GenericLifecycleObserver() {
-            @Override
-            public void onStateChanged(LifecycleOwner source, Lifecycle.Event event) {
-                if (event == Lifecycle.Event.ON_START) {
-                    mAllowingSavingState = true;
-                } else if (event == Lifecycle.Event.ON_STOP) {
-                    mAllowingSavingState = false;
-                }
-            }
-        });
+@Nullable
+private Bundle mRestoredState;
 
-        mRestored = true;
+@MainThread
+void performRestore(@NonNull Lifecycle lifecycle, @Nullable Bundle savedState) {
+    if (mRestored) {
+        //不应该重复恢复数据
+        throw new IllegalStateException("SavedStateRegistry was already restored.");
     }
+    if (savedState != null) {
+        //步骤1
+        mRestoredState = savedState.getBundle(SAVED_COMPONENTS_KEY);
+    }
+
+    //步骤2
+    lifecycle.addObserver(new GenericLifecycleObserver() {
+        @Override
+        public void onStateChanged(LifecycleOwner source, Lifecycle.Event event) {
+            if (event == Lifecycle.Event.ON_START) {
+                mAllowingSavingState = true;
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                mAllowingSavingState = false;
+            }
+        }
+    });
+
+    mRestored = true;
+}
 ```
 
 ## 消费数据
@@ -333,23 +328,23 @@ SavedStateRegistry 是实际进行保存和恢复数据的地方，那么很自�
 消费数据的入口就是 `consumeRestoredStateForKey`方法，外部通过使用和传给 `registerSavedStateProvider` 方法时一样的 key 来取数据，并在取了之后将数据从 `mRestoredState` 中移除。如果所有数据都被消费了的话，那么就将 `mRestoredState` 置为 null，标记着所有数据都已经被消费完了
 
 ```java
-    @MainThread
-    @Nullable
-    public Bundle consumeRestoredStateForKey(@NonNull String key) {
-        if (!mRestored) {
-            throw new IllegalStateException("You can consumeRestoredStateForKey "
-                    + "only after super.onCreate of corresponding component");
-        }
-        if (mRestoredState != null) {
-            Bundle result = mRestoredState.getBundle(key);
-            mRestoredState.remove(key);
-            if (mRestoredState.isEmpty()) {
-                mRestoredState = null;
-            }
-            return result;
-        }
-        return null;
+@MainThread
+@Nullable
+public Bundle consumeRestoredStateForKey(@NonNull String key) {
+    if (!mRestored) {
+        throw new IllegalStateException("You can consumeRestoredStateForKey "
+                + "only after super.onCreate of corresponding component");
     }
+    if (mRestoredState != null) {
+        Bundle result = mRestoredState.getBundle(key);
+        mRestoredState.remove(key);
+        if (mRestoredState.isEmpty()) {
+            mRestoredState = null;
+        }
+        return result;
+    }
+    return null;
+}
 ```
 
 ## 联系
@@ -393,130 +388,130 @@ public final class SavedStateHandle {
 `getLiveData` 方法会返回一个和 `key` 还有 `mRegular`关联的 LiveData 对象，LiveData 对象的初始默认值会从`mRegular`和`initialValue`两个之间选取，每次生成的 LiveData 对象也都会被保存在 `mLiveDatas` 中，以便后续复用
 
 ```java
-	private final Map<String, SavingStateLiveData<?>> mLiveDatas = new HashMap<>();
+private final Map<String, SavingStateLiveData<?>> mLiveDatas = new HashMap<>();
 
-	@MainThread
-    @NonNull
-    public <T> MutableLiveData<T> getLiveData(@NonNull String key) {
-        return getLiveDataInternal(key, false, null);
-    }
+@MainThread
+@NonNull
+public <T> MutableLiveData<T> getLiveData(@NonNull String key) {
+    return getLiveDataInternal(key, false, null);
+}
 
-    @MainThread
-    @NonNull
-    public <T> MutableLiveData<T> getLiveData(@NonNull String key,
-            @SuppressLint("UnknownNullness") T initialValue) {
-        return getLiveDataInternal(key, true, initialValue);
-    }
+@MainThread
+@NonNull
+public <T> MutableLiveData<T> getLiveData(@NonNull String key,
+        @SuppressLint("UnknownNullness") T initialValue) {
+    return getLiveDataInternal(key, true, initialValue);
+}
 
-    @SuppressWarnings("unchecked")
-    @NonNull
-    private <T> MutableLiveData<T> getLiveDataInternal(
-            @NonNull String key,
-            boolean hasInitialValue,
-            @Nullable T initialValue) {
-        MutableLiveData<T> liveData = (MutableLiveData<T>) mLiveDatas.get(key);
-        if (liveData != null) {
-            return liveData;
-        }
-        SavingStateLiveData<T> mutableLd;
-        // double hashing but null is valid value
-        if (mRegular.containsKey(key)) {
-            mutableLd = new SavingStateLiveData<>(this, key, (T) mRegular.get(key));
-        } else if (hasInitialValue) {
-            mutableLd = new SavingStateLiveData<>(this, key, initialValue);
-        } else {
-            mutableLd = new SavingStateLiveData<>(this, key);
-        }
-        mLiveDatas.put(key, mutableLd);
-        return mutableLd;
+@SuppressWarnings("unchecked")
+@NonNull
+private <T> MutableLiveData<T> getLiveDataInternal(
+        @NonNull String key,
+        boolean hasInitialValue,
+        @Nullable T initialValue) {
+    MutableLiveData<T> liveData = (MutableLiveData<T>) mLiveDatas.get(key);
+    if (liveData != null) {
+        return liveData;
     }
+    SavingStateLiveData<T> mutableLd;
+    // double hashing but null is valid value
+    if (mRegular.containsKey(key)) {
+        mutableLd = new SavingStateLiveData<>(this, key, (T) mRegular.get(key));
+    } else if (hasInitialValue) {
+        mutableLd = new SavingStateLiveData<>(this, key, initialValue);
+    } else {
+        mutableLd = new SavingStateLiveData<>(this, key);
+    }
+    mLiveDatas.put(key, mutableLd);
+    return mutableLd;
+}
 ```
 
 当外部对 LiveData 进行值更新操作时，SavedStateHandle 需要拿到最新值，因为最终持久化保存的肯定也需要是最新值。所以 `getLiveDataInternal`方法返回的 SavingStateLiveData 对象就会在 `setValue` 方法被调用后，同步更新 `mRegular` 中的键值对数据
 
 ```java
-	static class SavingStateLiveData<T> extends MutableLiveData<T> {
-        private String mKey;
-        private SavedStateHandle mHandle;
+static class SavingStateLiveData<T> extends MutableLiveData<T> {
+    private String mKey;
+    private SavedStateHandle mHandle;
 
-        SavingStateLiveData(SavedStateHandle handle, String key, T value) {
-            super(value);
-            mKey = key;
-            mHandle = handle;
-        }
-
-        SavingStateLiveData(SavedStateHandle handle, String key) {
-            super();
-            mKey = key;
-            mHandle = handle;
-        }
-
-        @Override
-        public void setValue(T value) {
-            if (mHandle != null) {
-                mHandle.mRegular.put(mKey, value);
-            }
-            super.setValue(value);
-        }
-
-        void detach() {
-            mHandle = null;
-        }
+    SavingStateLiveData(SavedStateHandle handle, String key, T value) {
+        super(value);
+        mKey = key;
+        mHandle = handle;
     }
+
+    SavingStateLiveData(SavedStateHandle handle, String key) {
+        super();
+        mKey = key;
+        mHandle = handle;
+    }
+
+    @Override
+    public void setValue(T value) {
+        if (mHandle != null) {
+            mHandle.mRegular.put(mKey, value);
+        }
+        super.setValue(value);
+    }
+
+    void detach() {
+        mHandle = null;
+    }
+}
 ```
 
 SavedStateHandle 也提供了另外一种声明需要缓存的键值对数据的方法。SavedStateHandle 开放了一个 `setSavedStateProvider` 方法交由外部来传入 SavedStateProvider 对象，外部负责实现 `saveState()`方法来返回想要持久化缓存的 Bundle 对象，由 SavedStateHandle 来负责调用该方法
 
 ```java
-    public interface SavedStateProvider {
-        @NonNull
-        Bundle saveState();
-    }
+public interface SavedStateProvider {
+    @NonNull
+    Bundle saveState();
+}
 
-    final Map<String, SavedStateProvider> mSavedStateProviders = new HashMap<>();
+final Map<String, SavedStateProvider> mSavedStateProviders = new HashMap<>();
 
-    @MainThread
-    public void setSavedStateProvider(@NonNull String key, @NonNull SavedStateProvider provider) {
-        mSavedStateProviders.put(key, provider);
-    }
+@MainThread
+public void setSavedStateProvider(@NonNull String key, @NonNull SavedStateProvider provider) {
+    mSavedStateProviders.put(key, provider);
+}
 ```
 
 我们在 ViewModel 层通过向 `mRegular`存取值，就是在决定一旦 Activity 被意外销毁重建时需要恢复的数据有哪些，所以最终 `mRegular`还是要被存到 Bundle 里，这个过程就由 `mSavedStateProvider`来实现，其内部会遍历`mSavedStateProviders`和 `mRegular`，将 key 和 value 按照对应关系顺序存入两个不同的 ArrayList 里，最后将两个 ArrayList 都保存到 Bundle 里
 
 ```java
-	private final SavedStateProvider mSavedStateProvider = new SavedStateProvider() {
-        @SuppressWarnings("unchecked")
-        @NonNull
-        @Override
-        public Bundle saveState() {
-            // Get the saved state from each SavedStateProvider registered with this
-            // SavedStateHandle, iterating through a copy to avoid re-entrance
-            Map<String, SavedStateProvider> map = new HashMap<>(mSavedStateProviders);
-            for (Map.Entry<String, SavedStateProvider> entry : map.entrySet()) {
-                Bundle savedState = entry.getValue().saveState();
-                set(entry.getKey(), savedState);
-            }
-            // Convert the Map of current values into a Bundle
-            Set<String> keySet = mRegular.keySet();
-            ArrayList keys = new ArrayList(keySet.size());
-            ArrayList value = new ArrayList(keys.size());
-            for (String key : keySet) {
-                keys.add(key);
-                value.add(mRegular.get(key));
-            }
-
-            Bundle res = new Bundle();
-            // "parcelable" arraylists - lol
-            res.putParcelableArrayList("keys", keys);
-            res.putParcelableArrayList("values", value);
-            return res;
-        }
-    };
-
+private final SavedStateProvider mSavedStateProvider = new SavedStateProvider() {
+    @SuppressWarnings("unchecked")
     @NonNull
-    SavedStateProvider savedStateProvider() {
-        return mSavedStateProvider;
+    @Override
+    public Bundle saveState() {
+        // Get the saved state from each SavedStateProvider registered with this
+        // SavedStateHandle, iterating through a copy to avoid re-entrance
+        Map<String, SavedStateProvider> map = new HashMap<>(mSavedStateProviders);
+        for (Map.Entry<String, SavedStateProvider> entry : map.entrySet()) {
+            Bundle savedState = entry.getValue().saveState();
+            set(entry.getKey(), savedState);
+        }
+        // Convert the Map of current values into a Bundle
+        Set<String> keySet = mRegular.keySet();
+        ArrayList keys = new ArrayList(keySet.size());
+        ArrayList value = new ArrayList(keys.size());
+        for (String key : keySet) {
+            keys.add(key);
+            value.add(mRegular.get(key));
+        }
+
+        Bundle res = new Bundle();
+        // "parcelable" arraylists - lol
+        res.putParcelableArrayList("keys", keys);
+        res.putParcelableArrayList("values", value);
+        return res;
     }
+};
+
+@NonNull
+SavedStateProvider savedStateProvider() {
+    return mSavedStateProvider;
+}
 ```
 
 # 六、关联上

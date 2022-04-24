@@ -1,36 +1,20 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
 > 对于 Android Developer 来说，很多开源库都是属于**开发必备**的知识点，从使用方式到实现原理再到源码解析，这些都需要我们有一定程度的了解和运用能力。所以我打算来写一系列关于开源库**源码解析**和**实战演练**的文章，初定的目标是 **EventBus、ARouter、LeakCanary、Retrofit、Glide、OkHttp、Coil** 等七个知名开源库，希望对你有所帮助 🤣🤣
-
-系列文章导航：
-
-- [三方库源码笔记（1）-EventBus 源码详解](https://juejin.cn/post/6881265680465788936)
-- [三方库源码笔记（2）-EventBus 自己实现一个](https://juejin.cn/post/6881808026647396366)
-- [三方库源码笔记（3）-ARouter 源码详解](https://juejin.cn/post/6882553066285957134)
-- [三方库源码笔记（4）-ARouter 自己实现一个](https://juejin.cn/post/6883105868326862856)
-- [三方库源码笔记（5）-LeakCanary 源码详解](https://juejin.cn/post/6884225131015569421)
-- [三方库源码笔记（6）-LeakCanary 扩展阅读](https://juejin.cn/post/6884526739646185479)
-- [三方库源码笔记（7）-Retrofit 源码详解](https://juejin.cn/post/6886121327845965838)
-- [三方库源码笔记（8）-Retrofit 与 LiveData 的结合使用](https://juejin.cn/post/6887408273213882375)
-- [三方库源码笔记（9）-Glide 源码详解](https://juejin.cn/post/6891307560557608967)
-- [三方库源码笔记（10）-Glide 你可能不知道的知识点](https://juejin.cn/post/6892751013544263687)
-- [三方库源码笔记（11）-OkHttp 源码详解](https://juejin.cn/post/6895369745445748749)
-- [三方库源码笔记（12）-OkHttp / Retrofit 开发调试利器](https://juejin.cn/post/6895740949025177607)
-- [三方库源码笔记（13）-可能是全网第一篇 Coil 的源码分析文章](https://juejin.cn/post/6897872882051842061)
 
 上一篇文章中对 ARouter 的源码进行了一次全面解析，原理懂得了，那么就也需要进行一次实战才行。对于一个优秀的第三方库，开发者除了要学会如何使用外，更有难度的用法就是去了解实现原理、懂得如何改造甚至自己实现。本文就来自己动手实现一个路由框架，自己实现的目的不在于做到和 ARouter 一样功能完善，而只是一个练手项目，目的是在于加深对 ARouter 的原理理解，所以自己的自定义实现就叫 EasyRouter 吧 😂😂
 
 EasyRouter 支持同个模块间及跨模块实现 Activity 的跳转，仅需要指定一个字符串 path 即可：
 
 ```kotlin
-	EasyRouter.navigation(EasyRouterPath.PATH_HOME)
+EasyRouter.navigation(EasyRouterPath.PATH_HOME)
 ```
 
 最终实现的效果：
 
-![](https://s1.ax1x.com/2020/10/06/0tcEPP.gif)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/aba28a3aebf24575a181d2b9d116a02f~tplv-k3u1fbpfcp-zoom-1.image)
 
 EasyRouter 的实现及使用一共涉及以下几个模块：
 
@@ -111,10 +95,9 @@ public class EasyRouterRouterTestLoader {
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/10/6 1:08
+ * @Author: leavesCZY
  * @Desc:
- * @Github：https://github.com/leavesC
+ * @Github：https://github.com/leavesCZY
  */
 @MustBeDocumented
 @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
@@ -130,10 +113,9 @@ data class RouterBean(val targetClass: Class<*>, val path: String, val group: St
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/10/5 22:17
+ * @Author: leavesCZY
  * @Desc:
- * @Github：https://github.com/leavesC
+ * @Github：https://github.com/leavesCZY
  */
 class EasyRouterProcessor : AbstractProcessor() {
 
@@ -184,78 +166,78 @@ class EasyRouterProcessor : AbstractProcessor() {
 首先需要生成的 `routerMap`这个用于存储路由表信息的 Map 字段，其 key 值即 path，value 值即 path 对应的页面信息
 
 ```kotlin
-    //生成 routerMap 这个静态常量
-    private fun generateSubscriberField(): FieldSpec {
-        val subscriberIndex = ParameterizedTypeName.get(
-            ClassName.get(Map::class.java),
-            ClassName.get(String::class.java),
-            ClassName.get(RouterBean::class.java)
+//生成 routerMap 这个静态常量
+private fun generateSubscriberField(): FieldSpec {
+    val subscriberIndex = ParameterizedTypeName.get(
+        ClassName.get(Map::class.java),
+        ClassName.get(String::class.java),
+        ClassName.get(RouterBean::class.java)
+    )
+    return FieldSpec.builder(subscriberIndex, "routerMap")
+        .addModifiers(
+            Modifier.PUBLIC,
+            Modifier.STATIC,
+            Modifier.FINAL
         )
-        return FieldSpec.builder(subscriberIndex, "routerMap")
-            .addModifiers(
-                Modifier.PUBLIC,
-                Modifier.STATIC,
-                Modifier.FINAL
-            )
-            .initializer("new ${"$"}T<>()", HashMap::class.java)
-            .build()
-    }
+        .initializer("new ${"$"}T<>()", HashMap::class.java)
+        .build()
+}
 ```
 
 之后就需要生成静态方法块。拿到 `@Router` 注解包含的 path 属性，及被注解的类对应的 Class 对象，以此来构建一个 RouterBean 对象并存到 `routerMap`中
 
 ```kotlin
-	//生成静态方法块
-    private fun generateInitializerBlock(
-        elements: MutableSet<out Element>,
-        builder: TypeSpec.Builder
-    ) {
-        val codeBuilder = CodeBlock.builder()
-        elements.forEach {
-            val router = it.getAnnotation(Router::class.java)
-            val path = router.path
-            val group = path.substring(0, path.indexOf("/"))
-            codeBuilder.add(
-                "routerMap.put(${"$"}S, new ${"$"}T(${"$"}T.class, ${"$"}S, ${"$"}S));",
-                path,
-                RouterBean::class.java,
-                it.asType(),
-                path,
-                group
-            )
-        }
-        builder.addInitializerBlock(
-            codeBuilder.build()
+//生成静态方法块
+private fun generateInitializerBlock(
+    elements: MutableSet<out Element>,
+    builder: TypeSpec.Builder
+) {
+    val codeBuilder = CodeBlock.builder()
+    elements.forEach {
+        val router = it.getAnnotation(Router::class.java)
+        val path = router.path
+        val group = path.substring(0, path.indexOf("/"))
+        codeBuilder.add(
+            "routerMap.put(${"$"}S, new ${"$"}T(${"$"}T.class, ${"$"}S, ${"$"}S));",
+            path,
+            RouterBean::class.java,
+            it.asType(),
+            path,
+            group
         )
     }
+    builder.addInitializerBlock(
+        codeBuilder.build()
+    )
+}
 ```
 
 然后在 `process`方法中完成辅助文件的生成
 
 ```kotlin
-	override fun process(
-        mutableSet: MutableSet<out TypeElement>,
-        roundEnvironment: RoundEnvironment
-    ): Boolean {
-        val elements: MutableSet<out Element> =
-            roundEnvironment.getElementsAnnotatedWith(Router::class.java)
-        if (elements.isNullOrEmpty()) {
-            return true
-        }
-        val typeSpec = TypeSpec.classBuilder("EasyRouter" + moduleName + "Loader")
-            .addModifiers(Modifier.PUBLIC)
-            .addField(generateSubscriberField())
-            .addJavadoc(DOC)
-        generateInitializerBlock(elements, typeSpec)
-        val javaFile = JavaFile.builder(PACKAGE_NAME, typeSpec.build())
-            .build()
-        try {
-            javaFile.writeTo(processingEnv.filer)
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
+override fun process(
+    mutableSet: MutableSet<out TypeElement>,
+    roundEnvironment: RoundEnvironment
+): Boolean {
+    val elements: MutableSet<out Element> =
+        roundEnvironment.getElementsAnnotatedWith(Router::class.java)
+    if (elements.isNullOrEmpty()) {
         return true
     }
+    val typeSpec = TypeSpec.classBuilder("EasyRouter" + moduleName + "Loader")
+        .addModifiers(Modifier.PUBLIC)
+        .addField(generateSubscriberField())
+        .addJavadoc(DOC)
+    generateInitializerBlock(elements, typeSpec)
+    val javaFile = JavaFile.builder(PACKAGE_NAME, typeSpec.build())
+        .build()
+    try {
+        javaFile.writeTo(processingEnv.filer)
+    } catch (e: Throwable) {
+        e.printStackTrace()
+    }
+    return true
+}
 ```
 
 # 三、EasyRouter
@@ -264,10 +246,9 @@ EasyRouter 这个单例对象即最终提供给外部的调用入口，总代码
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/10/5 23:45
+ * @Author: leavesCZY
  * @Desc:
- * @Github：https://github.com/leavesC
+ * @Github：https://github.com/leavesCZY
  */
 object EasyRouter {
 
@@ -321,4 +302,4 @@ object EasyRouter {
 
 # 四、GitHub
 
-由于只是为了加深对 ARouter 的实现原理的理解，所以才来尝试实现 EasyRouter，也不打算实现得多么功能齐全，但对于一些读者来说我觉得还是有参考价值的😂😂 这里也提供上述代码的 GitHub 链接：[AndroidOpenSourceDemo](https://github.com/leavesC/AndroidOpenSourceDemo)
+由于只是为了加深对 ARouter 的实现原理的理解，所以才来尝试实现 EasyRouter，也不打算实现得多么功能齐全，但对于一些读者来说我觉得还是有参考价值的😂😂 这里也提供上述代码的 GitHub 链接：[AndroidOpenSourceDemo](https://github.com/leavesCZY/AndroidOpenSourceDemo)

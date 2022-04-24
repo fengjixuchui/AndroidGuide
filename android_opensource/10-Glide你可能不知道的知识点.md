@@ -1,24 +1,8 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
 > 对于 Android Developer 来说，很多开源库都是属于**开发必备**的知识点，从使用方式到实现原理再到源码解析，这些都需要我们有一定程度的了解和运用能力。所以我打算来写一系列关于开源库**源码解析**和**实战演练**的文章，初定的目标是 **EventBus、ARouter、LeakCanary、Retrofit、Glide、OkHttp、Coil** 等七个知名开源库，希望对你有所帮助 🤣🤣
-
-系列文章导航：
-
-- [三方库源码笔记（1）-EventBus 源码详解](https://juejin.cn/post/6881265680465788936)
-- [三方库源码笔记（2）-EventBus 自己实现一个](https://juejin.cn/post/6881808026647396366)
-- [三方库源码笔记（3）-ARouter 源码详解](https://juejin.cn/post/6882553066285957134)
-- [三方库源码笔记（4）-ARouter 自己实现一个](https://juejin.cn/post/6883105868326862856)
-- [三方库源码笔记（5）-LeakCanary 源码详解](https://juejin.cn/post/6884225131015569421)
-- [三方库源码笔记（6）-LeakCanary 扩展阅读](https://juejin.cn/post/6884526739646185479)
-- [三方库源码笔记（7）-Retrofit 源码详解](https://juejin.cn/post/6886121327845965838)
-- [三方库源码笔记（8）-Retrofit 与 LiveData 的结合使用](https://juejin.cn/post/6887408273213882375)
-- [三方库源码笔记（9）-Glide 源码详解](https://juejin.cn/post/6891307560557608967)
-- [三方库源码笔记（10）-Glide 你可能不知道的知识点](https://juejin.cn/post/6892751013544263687)
-- [三方库源码笔记（11）-OkHttp 源码详解](https://juejin.cn/post/6895369745445748749)
-- [三方库源码笔记（12）-OkHttp / Retrofit 开发调试利器](https://juejin.cn/post/6895740949025177607)
-- [三方库源码笔记（13）-可能是全网第一篇 Coil 的源码分析文章](https://juejin.cn/post/6897872882051842061)
 
 # 一、利用 AppGlideModule 实现默认配置
 
@@ -28,10 +12,8 @@
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/11/5 23:16
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 @GlideModule
 class MyAppGlideModule : AppGlideModule() {
@@ -186,10 +168,8 @@ dependencies {
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/11/5 23:16
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 class OkHttpStreamFetcher(private val client: Call.Factory, private val url: GlideUrl) :
     DataFetcher<InputStream>, Callback {
@@ -265,10 +245,8 @@ class OkHttpStreamFetcher(private val client: Call.Factory, private val url: Gli
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/11/5 23:16
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 class OkHttpUrlLoader(private val client: Call.Factory) : ModelLoader<GlideUrl, InputStream> {
 
@@ -307,10 +285,8 @@ class OkHttpUrlLoader(private val client: Call.Factory) : ModelLoader<GlideUrl, 
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/11/5 23:16
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 @GlideModule
 class MyAppGlideModule : AppGlideModule() {
@@ -342,10 +318,8 @@ class MyAppGlideModule : AppGlideModule() {
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/11/6 21:58
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 internal class ProgressResponseBody constructor(
     private val imageUrl: String,
@@ -444,10 +418,8 @@ internal class ProgressResponseBody constructor(
 
 ```kotlin
 /**
- * 作者：leavesC
- * 时间：2020/11/6 22:08
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  */
 class ProgressInterceptor : Interceptor {
 
@@ -465,7 +437,7 @@ class ProgressInterceptor : Interceptor {
 
 最终实现的效果：
 
-![](https://s1.ax1x.com/2020/11/07/B44aAU.gif)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/dc45cc83a1f745af92317d2d735a9ad6~tplv-k3u1fbpfcp-zoom-1.image)
 
 # 四、自定义磁盘缓存  key
 
@@ -479,10 +451,9 @@ https://images.pexels.com/photos/1425174/pexels-photo-1425174.jpeg?auto=compress
 
 ```java
 /**
- * @Author: leavesC
- * @Date: 2020/11/6 15:13
+ * @Author: leavesCZY
  * @Desc:
- * GitHub：https://github.com/leavesC
+ * @Github：https://github.com/leavesCZY
  */
 public class GlideUrl implements Key {
     
@@ -509,10 +480,9 @@ public class GlideUrl implements Key {
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/11/6 15:13
+ * @Author: leavesCZY
  * @Desc:
- * GitHub：https://github.com/leavesC
+ * @Github：https://github.com/leavesCZY
  */
 class TokenGlideUrl(private val selfUrl: String) : GlideUrl(selfUrl) {
 
@@ -535,7 +505,7 @@ class TokenGlideUrl(private val selfUrl: String) : GlideUrl(selfUrl) {
 然后在加载图片的时候使用 TokenGlideUrl 来传递图片 Url 即可
 
 ```kotlin
-      Glide.with(Context).load(TokenGlideUrl(ImageUrl)).into(ImageView)
+Glide.with(Context).load(TokenGlideUrl(ImageUrl)).into(ImageView)
 ```
 
 # 五、如何直接拿到图片
@@ -543,51 +513,51 @@ class TokenGlideUrl(private val selfUrl: String) : GlideUrl(selfUrl) {
 如果想直接取得 Bitmap 而非显示在 ImageView 上的话，可以用以下同步请求的方式来获得 Bitmap。需要注意的是，`submit()`方法就会触发 Glide 去请求图片，此时请求操作还是运行于 Glide 内部的线程池的，但 `get()`操作就会直接阻塞所在线程，直到图片加载结束（不管成功与否）才会返回
 
 ```kotlin
-            thread {
-                val futureTarget = Glide.with(this)
-                    .asBitmap()
-                    .load(url)
-                    .submit()
-                val bitmap = futureTarget.get()
-                runOnUiThread {
-                    iv_tokenUrl.setImageBitmap(bitmap)
-                }
-            }
+thread {
+    val futureTarget = Glide.with(this)
+        .asBitmap()
+        .load(url)
+        .submit()
+    val bitmap = futureTarget.get()
+    runOnUiThread {
+        iv_tokenUrl.setImageBitmap(bitmap)
+    }
+}
 ```
 
 也可以用类似的方式来拿到 File 或者 Drawable
 
 ```kotlin
-            thread {
-                val futureTarget = Glide.with(this)
-                    .asFile()
-                    .load(url)
-                    .submit()
-                val file = futureTarget.get()
-                runOnUiThread {
-                    showToast(file.absolutePath)
-                }
-            }
+thread {
+    val futureTarget = Glide.with(this)
+        .asFile()
+        .load(url)
+        .submit()
+    val file = futureTarget.get()
+    runOnUiThread {
+        showToast(file.absolutePath)
+    }
+}
 ```
 
 Glide 也提供了以下的异步加载方式
 
 ```kotlin
-            Glide.with(this)
-                .asBitmap()
-                .load(url)
-                .into(object : CustomTarget<Bitmap>() {
-                    override fun onLoadCleared(placeholder: Drawable?) {
-                        showToast("onLoadCleared")
-                    }
+Glide.with(this)
+    .asBitmap()
+    .load(url)
+    .into(object : CustomTarget<Bitmap>() {
+        override fun onLoadCleared(placeholder: Drawable?) {
+            showToast("onLoadCleared")
+        }
 
-                    override fun onResourceReady(
-                        resource: Bitmap,
-                        transition: Transition<in Bitmap>?
-                    ) {
-                        iv_tokenUrl.setImageBitmap(resource)
-                    }
-                })
+        override fun onResourceReady(
+            resource: Bitmap,
+            transition: Transition<in Bitmap>?
+        ) {
+            iv_tokenUrl.setImageBitmap(resource)
+        }
+    })
 ```
 
 # 六、Glide 如何实现网络监听
@@ -653,8 +623,7 @@ DefaultConnectivityMonitor 的逻辑比较简单，不过多赘述。我觉得�
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/11/7 14:40
+ * @Author: leavesCZY
  * @Desc:
  */
 internal interface ConnectivityListener {
@@ -733,4 +702,4 @@ internal class DefaultConnectivityMonitor(
 
 # 七、GitHub
 
-关于 Glide 的知识点扩展也介绍完了，上述的所有示例代码我也都放到 GitHub 了，欢迎 star：[AndroidOpenSourceDemo](https://github.com/leavesC/AndroidOpenSourceDemo)
+关于 Glide 的知识点扩展也介绍完了，上述的所有示例代码我也都放到 GitHub 了，欢迎 star：[AndroidOpenSourceDemo](https://github.com/leavesCZY/AndroidOpenSourceDemo)

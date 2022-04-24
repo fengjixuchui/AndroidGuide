@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -6,7 +6,7 @@
 
 Wifi P2P 是在 Android 4.0 以及更高版本系统中加入的功能，通过 Wifi P2P 可以在不连接网络的情况下，直接与配对的设备进行数据交换。相对于蓝牙，Wifi P2P 的搜索速度和传输速度更快，传输距离更远
 
-项目主页：[Android 实现无网络传输文件](https://github.com/leavesC/WifiP2P) ，欢迎 star
+项目主页：[Android 实现无网络传输文件](https://github.com/leavesCZY/WifiP2P) ，欢迎 star
 
 实现的效果如下所示：
 
@@ -123,10 +123,10 @@ public interface DirectActionListener extends WifiP2pManager.ChannelListener {
 
 ```java
 /
- * 作者：leavesC
- * 时间：2019/2/27 23:58
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Date: 2019/2/27 23:58
+ * @Desc:
+ * @Github：https://github.com/leavesCZY
  */
 public class DirectBroadcastReceiver extends BroadcastReceiver {
 
@@ -531,10 +531,10 @@ private String getPath(Context context, Uri uri) {
 
 ```java
 /
- * 作者：leavesC
- * 时间：2019/2/27 23:56
- * 描述：客户端发送文件
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Date: 2019/2/27 23:56
+ * @Desc: 客户端发送文件
+ * @Github：https://github.com/leavesCZY
  */
 public class WifiClientTask extends AsyncTask<String, Integer, Boolean> {
 
@@ -653,10 +653,10 @@ public class WifiClientTask extends AsyncTask<String, Integer, Boolean> {
 
 ```java
 /
- * 作者：leavesC
- * 时间：2019/2/27 23:57
- * 描述：
- * GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Date: 2019/2/27 23:57
+ * @Desc:
+ * @Github：https://github.com/leavesCZY
  */
 public class Md5Util {
 
@@ -704,4 +704,4 @@ public class Md5Util {
 
 因为客户端会将 FileTransfer 传给服务器端，所以服务器端在文件传输结束后，可以重新计算文件的 MD5码值，进行对比以判断文件是否完整
 
-项目主页：[Android 实现无网络传输文件](https://github.com/leavesC/WifiP2P) ，欢迎 star
+项目主页：[Android 实现无网络传输文件](https://github.com/leavesCZY/WifiP2P) ，欢迎 star

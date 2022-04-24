@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -217,7 +217,7 @@ AsyncTask 是一个较为轻量级的异步任务类，在底层通过封装 Thr
 
 `onPreExecute()`在 `executeOnExecutor(Executor, Params)`中有被调用，因为 `executeOnExecutor()`方法被要求在主线程中调用，因此 `onPreExecute()`自然也会在主线程中被执行
 
-其它方法的调用则涉及到了 Handler、Looper 与 MessageQueue 的相关知识点，关于这些可以从这里获取详细介绍： [**AndroidGuide**](https://github.com/leavesC/AndroidGuide) ，这里就简单介绍下
+其它方法的调用则涉及到了 Handler、Looper 与 MessageQueue 的相关知识点，关于这些可以从这里获取详细介绍： [**AndroidGuide**](https://github.com/leavesCZY/AndroidGuide) ，这里就简单介绍下
 
 看下 AsyncTask 类的三个构造函数。当中，除了无参构造函数，其他两个构造函数都使用 `@hide`注解隐藏起来了，因此我们在一般情况下只能使用调用无参构造函数来初始化 AsyncTask
 

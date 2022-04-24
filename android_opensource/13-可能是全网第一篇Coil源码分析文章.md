@@ -1,30 +1,14 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
 > 对于 Android Developer 来说，很多开源库都是属于**开发必备**的知识点，从使用方式到实现原理再到源码解析，这些都需要我们有一定程度的了解和运用能力。所以我打算来写一系列关于开源库**源码解析**和**实战演练**的文章，初定的目标是 **EventBus、ARouter、LeakCanary、Retrofit、Glide、OkHttp、Coil** 等七个知名开源库，希望对你有所帮助 🤣🤣
 
-系列文章导航：
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/259d24d1611d454ea49d453844377df2~tplv-k3u1fbpfcp-zoom-1.image)
 
-- [三方库源码笔记（1）-EventBus 源码详解](https://juejin.cn/post/6881265680465788936)
-- [三方库源码笔记（2）-EventBus 自己实现一个](https://juejin.cn/post/6881808026647396366)
-- [三方库源码笔记（3）-ARouter 源码详解](https://juejin.cn/post/6882553066285957134)
-- [三方库源码笔记（4）-ARouter 自己实现一个](https://juejin.cn/post/6883105868326862856)
-- [三方库源码笔记（5）-LeakCanary 源码详解](https://juejin.cn/post/6884225131015569421)
-- [三方库源码笔记（6）-LeakCanary 扩展阅读](https://juejin.cn/post/6884526739646185479)
-- [三方库源码笔记（7）-Retrofit 源码详解](https://juejin.cn/post/6886121327845965838)
-- [三方库源码笔记（8）-Retrofit 与 LiveData 的结合使用](https://juejin.cn/post/6887408273213882375)
-- [三方库源码笔记（9）-Glide 源码详解](https://juejin.cn/post/6891307560557608967)
-- [三方库源码笔记（10）-Glide 你可能不知道的知识点](https://juejin.cn/post/6892751013544263687)
-- [三方库源码笔记（11）-OkHttp 源码详解](https://juejin.cn/post/6895369745445748749)
-- [三方库源码笔记（12）-OkHttp / Retrofit 开发调试利器](https://juejin.cn/post/6895740949025177607)
-- [三方库源码笔记（13）-可能是全网第一篇 Coil 的源码分析文章](https://juejin.cn/post/6897872882051842061)
+Coil 是我最后一个要来分析的开源库，本篇也是我 **Android 主流开源库源码分析** 这个系列的最后一篇文章，包含 Coil 的入门介绍和源码分析。这一个系列的文章从动笔到结束花了要两个月时间，到今天也就结尾了，原创不易，觉得有用就请给个赞吧 😂😂😂
 
-![](https://s3.ax1x.com/2020/11/17/DV7Na6.png)
-
-Coil 是我最后一个要来分析的开源库，本篇也是我 [三方库源码笔记](https://juejin.cn/user/923245496518439/posts) 这个系列的最后一篇文章了，包含 Coil 的入门介绍和源码分析。这一整个系列的文章我从国庆写到现在也是要两个月了，到今天也就结尾了，原创不易，觉得有用就请给个赞吧😂😂
-
-Coil 这个开源库我关注了蛮久的，因为其很多特性在我看来都挺有意思的，Coil 在2020年10月22日才发布了 1.0.0 版本，还热乎着呢。我在网上搜了搜 Coil 的资料，看到的文章都只是入门介绍，没看见到关于源码层次的分析，而且本文写好的时候离 1.0.0 版本发布刚好才隔了一个月时间，应该没人比我还早了吧？就斗胆给文章起了这么个标题：**可能是全网第一篇 Coil 的源码分析文章** ~~~
+Coil 这个开源库我关注了蛮久的，因为其很多特性在我看来都挺有意思的。Coil 在 2020 年 10 月 22 日才发布了 1.0.0 版本，我当时在网上搜了搜 Coil 的资料，看到的文章都只是入门介绍，没看见到关于源码层次的分析，而本文的发表时间离 1.0.0 版本发布刚好才隔了一个月时间，应该没人比我还早了吧？就斗胆给文章起了这么个标题：**可能是全网第一篇 Coil 源码分析文章** ~
 
 # 一、Coil 是什么
 
@@ -46,25 +30,27 @@ Coil 要求 **AndroidX、Min SDK 14+、Java 8+** 环境
 Gradle (`.gradle`)：
 
 ```groovy
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+}
+
+kotlinOptions {
+    jvmTarget = "1.8"
+}
 ```
 
 Gradle Kotlin DSL (`.gradle.kts`)：
 
 ```groovy
-   	compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+kotlinOptions {
+    jvmTarget = "1.8"
+}
 ```
 
 Coil 一共包含五个组件，可以在 `mavenCentral()`上获取到
@@ -75,7 +61,7 @@ Coil 一共包含五个组件，可以在 `mavenCentral()`上获取到
 - `io.coil-kt:coil-svg`。包含一个 [decoder](https://coil-kt.github.io/coil/api/coil-base/coil.decode/-decoder) 用于支持解码 SVG。有关更多详细信息，请参见 [SVG](https://coil-kt.github.io/coil/svgs/)
 - `io.coil-kt:coil-video`。包含两个 [fetchers](https://coil-kt.github.io/coil/api/coil-base/coil.fetch/-fetcher) 用于支持读取和解码 [任何 Android 的支持的视频格式](https://developer.android.com/guide/topics/media/media-formats#video-codecs) 的视频帧。有关更多详细信息，请参见 [videos](https://coil-kt.github.io/coil/videos/)
 
-当前 Coil 最新的 release 版本是 1.0.0，引入如下依赖就包含了 Coil 最基础的图片加载功能
+引入如下依赖就包含了 Coil 最基础的图片加载功能
 
 ```kotlin
 implementation("io.coil-kt:coil:1.0.0")
@@ -123,13 +109,13 @@ imageView.load("https://www.example.com/image.jpg") {
 如果要将图片加载到自定义的 target 中，可以通过 ImageRequest.Builder 来构建 ImageRequest 实例，并将请求提交给 ImageLoader
 
 ```kotlin
-        val request = ImageRequest.Builder(context)
-            .data("https://www.example.com/image.jpg")
-            .target { drawable ->
-                // Handle the result.
-            }
-            .build()
-        context.imageLoader.enqueue(request)
+val request = ImageRequest.Builder(context)
+    .data("https://www.example.com/image.jpg")
+    .target { drawable ->
+        // Handle the result.
+    }
+    .build()
+context.imageLoader.enqueue(request)
 ```
 
 ## 3、ImageLoader
@@ -143,12 +129,12 @@ val imageLoader = context.imageLoader
 可选地，你也可以构建自己的 ImageLoader 实例，并赋值给 Coil 来实现全局使用
 
 ```kotlin
- 	   Coil.setImageLoader(
-            ImageLoader.Builder(application)
-                .placeholder(ActivityCompat.getDrawable(application, R.drawable.icon_loading))
-                .error(ActivityCompat.getDrawable(application, R.drawable.icon_error))
-                .build()
-        )
+Coil.setImageLoader(
+    ImageLoader.Builder(application)
+        .placeholder(ActivityCompat.getDrawable(application, R.drawable.icon_loading))
+        .error(ActivityCompat.getDrawable(application, R.drawable.icon_error))
+        .build()
+)
 ```
 
 ## 4、execute
@@ -226,18 +212,18 @@ Coil 在我看来是一个比较“**激进**”的开源库，热衷于使用�
 最简单的加载方式只需要调用一个`load`方法即可，比 Glide 还简洁，想要添加配置项的话就在 lambda 块中添加
 
 ```kotlin
-            //直接加载图片，不添加任何配置项
-            imageView.load(imageUrl)
+//直接加载图片，不添加任何配置项
+imageView.load(imageUrl)
 
-            //在 lambda 块中添加配置项
-            imageView.load(imageUrl) {
-                crossfade(true) //淡入淡出
-                placeholder(android.R.drawable.presence_away) //占位图
-                error(android.R.drawable.stat_notify_error) //图片加载失败时显示的图
-                transformations(
-                    CircleCropTransformation() //将图片显示为圆形
-                )
-            }
+//在 lambda 块中添加配置项
+imageView.load(imageUrl) {
+    crossfade(true) //淡入淡出
+    placeholder(android.R.drawable.presence_away) //占位图
+    error(android.R.drawable.stat_notify_error) //图片加载失败时显示的图
+    transformations(
+        CircleCropTransformation() //将图片显示为圆形
+    )
+}
 ```
 
 Coil 为 ImageView 声明了多个用于加载图片的扩展函数，均命名为 `load`，默认情况下我们只需要传一个图片来源地址即可，支持 **String、HttpUrl、Uri、File、Int、Drawable、Bitmap** 等多种入参类型
@@ -283,41 +269,41 @@ inline fun ImageView.loadAny(
 ImageRequest 基于 Builder 模式来构建，包含了加载图片时的各个配置项，其配置项很多，重点看前九个
 
 ```kotlin
-	    private val context: Context //外部传入的 Context，例如 ImageView 包含的 Context
-	    private var data: Any? //图片地址
-        private var target: Target? //图片加载成功后的接收类
-        private var lifecycle: Lifecycle? //ImageView 关联的生命周期
-        private var memoryCachePolicy: CachePolicy? //内存缓存配置
-        private var diskCachePolicy: CachePolicy? //磁盘缓存配置
-        private var networkCachePolicy: CachePolicy? //网络缓存配置
-        private var fetcher: Pair<Fetcher<*>, Class<*>>? //完成图片加载的处理器
-        private var decoder: Decoder? //完成图片转码的转换器
+private val context: Context //外部传入的 Context，例如 ImageView 包含的 Context
+private var data: Any? //图片地址
+private var target: Target? //图片加载成功后的接收类
+private var lifecycle: Lifecycle? //ImageView 关联的生命周期
+private var memoryCachePolicy: CachePolicy? //内存缓存配置
+private var diskCachePolicy: CachePolicy? //磁盘缓存配置
+private var networkCachePolicy: CachePolicy? //网络缓存配置
+private var fetcher: Pair<Fetcher<*>, Class<*>>? //完成图片加载的处理器
+private var decoder: Decoder? //完成图片转码的转换器
 
-	    private var defaults: DefaultRequestOptions
-        private var listener: Listener?
-        private var memoryCacheKey: MemoryCache.Key?
-        private var placeholderMemoryCacheKey: MemoryCache.Key?
-        private var colorSpace: ColorSpace? = null
-        private var transformations: List<Transformation>
-        private var headers: Headers.Builder?
-        private var parameters: Parameters.Builder?
-        private var sizeResolver: SizeResolver?
-        private var scale: Scale?
-        private var dispatcher: CoroutineDispatcher?
-        private var transition: Transition?
-        private var precision: Precision?
-        private var bitmapConfig: Bitmap.Config?
-        private var allowHardware: Boolean?
-        private var allowRgb565: Boolean?
-        @DrawableRes private var placeholderResId: Int?
-        private var placeholderDrawable: Drawable?
-        @DrawableRes private var errorResId: Int?
-        private var errorDrawable: Drawable?
-        @DrawableRes private var fallbackResId: Int?
-        private var fallbackDrawable: Drawable?
-        private var resolvedLifecycle: Lifecycle?
-        private var resolvedSizeResolver: SizeResolver?
-        private var resolvedScale: Scale?
+private var defaults: DefaultRequestOptions
+private var listener: Listener?
+private var memoryCacheKey: MemoryCache.Key?
+private var placeholderMemoryCacheKey: MemoryCache.Key?
+private var colorSpace: ColorSpace? = null
+private var transformations: List<Transformation>
+private var headers: Headers.Builder?
+private var parameters: Parameters.Builder?
+private var sizeResolver: SizeResolver?
+private var scale: Scale?
+private var dispatcher: CoroutineDispatcher?
+private var transition: Transition?
+private var precision: Precision?
+private var bitmapConfig: Bitmap.Config?
+private var allowHardware: Boolean?
+private var allowRgb565: Boolean?
+@DrawableRes private var placeholderResId: Int?
+private var placeholderDrawable: Drawable?
+@DrawableRes private var errorResId: Int?
+private var errorDrawable: Drawable?
+@DrawableRes private var fallbackResId: Int?
+private var fallbackDrawable: Drawable?
+private var resolvedLifecycle: Lifecycle?
+private var resolvedSizeResolver: SizeResolver?
+private var resolvedScale: Scale?
 ```
 
 ## 1、Target
@@ -444,8 +430,8 @@ enum class CachePolicy(
 Fetcher 是**根据图片来源地址转换为目标数据类型**的转换器。例如，我们传入了 Int 类型的 drawableResId，想要以此拿到 Drawable，那么这里的 `Class<*>` 即 `Class<Int>` ，`Fetcher<*>` 即 `Fetcher<Drawable>`
 
 ```kotlin
-    /** @see Builder.fetcher */
-    val fetcher: Pair<Fetcher<*>, Class<*>>?,
+/** @see Builder.fetcher */
+val fetcher: Pair<Fetcher<*>, Class<*>>?,
 ```
 
 Fetcher 接口包含三个方法
@@ -480,19 +466,19 @@ interface Fetcher<T : Any> {
 Coil 默认提供了以下八种类型的 Fetcher，分别用于处理 **HttpUriUri、HttpUriUrl、File、Asset、ContentUri、Resource、Drawable、Bitmap** 等类型的图片来源地址
 
 ```kotlin
-    private val registry = componentRegistry.newBuilder()
-		···
-        // Fetchers
-        .add(HttpUriFetcher(callFactory))
-        .add(HttpUrlFetcher(callFactory))
-        .add(FileFetcher(addLastModifiedToFileCacheKey))
-        .add(AssetUriFetcher(context))
-        .add(ContentUriFetcher(context))
-        .add(ResourceUriFetcher(context, drawableDecoder))
-        .add(DrawableFetcher(drawableDecoder))
-        .add(BitmapFetcher())
-		···
-        .build()
+private val registry = componentRegistry.newBuilder()
+    ···
+    // Fetchers
+    .add(HttpUriFetcher(callFactory))
+    .add(HttpUrlFetcher(callFactory))
+    .add(FileFetcher(addLastModifiedToFileCacheKey))
+    .add(AssetUriFetcher(context))
+    .add(ContentUriFetcher(context))
+    .add(ResourceUriFetcher(context, drawableDecoder))
+    .add(DrawableFetcher(drawableDecoder))
+    .add(BitmapFetcher())
+    ···
+    .build()
 ```
 
 ## 5、Decoder
@@ -623,21 +609,21 @@ interface ImageLoader {
 ImageLoader 的唯一实现类是 RealImageLoader，其`enqueue`方法会启动一个协程，在 job 里执行 `executeMain` 方法得到 ImageResult，ImageResult 就包含了最终得到的图片。同时，job 会被包含在返回的 Disposable 对象里，这样外部才能**取消图片加载**或者**等待图片加载完成**
 
 ```kotlin
-	override fun enqueue(request: ImageRequest): Disposable {
-        // Start executing the request on the main thread.
-        val job = scope.launch {
-            val result = executeMain(request, REQUEST_TYPE_ENQUEUE)
-            if (result is ErrorResult) throw result.throwable
-        }
-
-        // Update the current request attached to the view and return a new disposable.
-        return if (request.target is ViewTarget<*>) {
-            val requestId = request.target.view.requestManager.setCurrentRequestJob(job)
-            ViewTargetDisposable(requestId, request.target)
-        } else {
-            BaseTargetDisposable(job)
-        }
+override fun enqueue(request: ImageRequest): Disposable {
+    // Start executing the request on the main thread.
+    val job = scope.launch {
+        val result = executeMain(request, REQUEST_TYPE_ENQUEUE)
+        if (result is ErrorResult) throw result.throwable
     }
+
+    // Update the current request attached to the view and return a new disposable.
+    return if (request.target is ViewTarget<*>) {
+        val requestId = request.target.view.requestManager.setCurrentRequestJob(job)
+        ViewTargetDisposable(requestId, request.target)
+    } else {
+        BaseTargetDisposable(job)
+    }
+}
 ```
 
 executeMain 方法的逻辑也比较简单，可以概括为：
@@ -649,66 +635,66 @@ executeMain 方法的逻辑也比较简单，可以概括为：
 5. 调用 executeChain 方法拿到 ImageResult，判断是否成功，调用 target 对应的成功或者失败的方法
 
 ```kotlin
-	@MainThread
-    private suspend fun executeMain(initialRequest: ImageRequest, type: Int): ImageResult {
-        ···
+@MainThread
+private suspend fun executeMain(initialRequest: ImageRequest, type: Int): ImageResult {
+    ···
 
-        // Apply this image loader's defaults to this request.
-        val request = initialRequest.newBuilder().defaults(defaults).build()
+    // Apply this image loader's defaults to this request.
+    val request = initialRequest.newBuilder().defaults(defaults).build()
 
-        //target 代理，用于支持Bitmap池
-        val targetDelegate = delegateService.createTargetDelegate(request.target, type, eventListener)
+    //target 代理，用于支持Bitmap池
+    val targetDelegate = delegateService.createTargetDelegate(request.target, type, eventListener)
 
-        //request 代理，用于支持 lifecycle
-        val requestDelegate = delegateService.createRequestDelegate(request, targetDelegate, coroutineContext.job)
+    //request 代理，用于支持 lifecycle
+    val requestDelegate = delegateService.createRequestDelegate(request, targetDelegate, coroutineContext.job)
 
+    try {
+        //如果 data 为 null，那么就抛出异常
+        if (request.data == NullRequestData) throw NullRequestDataException()
+
+        //如果是异步请求的话，那么就需要等到 Lifecycle 至少处于 Started 状态之后才能继续执行
+        if (type == REQUEST_TYPE_ENQUEUE) request.lifecycle.awaitStarted()
+
+        //获取展位图传给 target，从内存缓存中加载或者从全新加载
+        val cached = memoryCacheService[request.placeholderMemoryCacheKey]?.bitmap
         try {
-            //如果 data 为 null，那么就抛出异常
-            if (request.data == NullRequestData) throw NullRequestDataException()
-
-            //如果是异步请求的话，那么就需要等到 Lifecycle 至少处于 Started 状态之后才能继续执行
-            if (type == REQUEST_TYPE_ENQUEUE) request.lifecycle.awaitStarted()
-
-            //获取展位图传给 target，从内存缓存中加载或者从全新加载
-            val cached = memoryCacheService[request.placeholderMemoryCacheKey]?.bitmap
-            try {
-                targetDelegate.metadata = null
-                targetDelegate.start(cached?.toDrawable(request.context) ?: request.placeholder, cached)
-                eventListener.onStart(request)
-                request.listener?.onStart(request)
-            } finally {
-                referenceCounter.decrement(cached)
-            }
-
-            //获取 target 需要的图片尺寸大小，按需加载
-            eventListener.resolveSizeStart(request)
-            val size = request.sizeResolver.size()
-            eventListener.resolveSizeEnd(request, size)
-
-            // Execute the interceptor chain.
-            val result = executeChain(request, type, size, cached, eventListener)
-
-            // Set the result on the target.
-            //判断 result 成功与否，调用相应的方法
-            when (result) {
-                is SuccessResult -> onSuccess(result, targetDelegate, eventListener)
-                is ErrorResult -> onError(result, targetDelegate, eventListener)
-            }
-            return result
-        } catch (throwable: Throwable) {
-            if (throwable is CancellationException) {
-                onCancel(request, eventListener)
-                throw throwable
-            } else {
-                // Create the default error result if there's an uncaught exception.
-                val result = requestService.errorResult(request, throwable)
-                onError(result, targetDelegate, eventListener)
-                return result
-            }
+            targetDelegate.metadata = null
+            targetDelegate.start(cached?.toDrawable(request.context) ?: request.placeholder, cached)
+            eventListener.onStart(request)
+            request.listener?.onStart(request)
         } finally {
-            requestDelegate.complete()
+            referenceCounter.decrement(cached)
         }
+
+        //获取 target 需要的图片尺寸大小，按需加载
+        eventListener.resolveSizeStart(request)
+        val size = request.sizeResolver.size()
+        eventListener.resolveSizeEnd(request, size)
+
+        // Execute the interceptor chain.
+        val result = executeChain(request, type, size, cached, eventListener)
+
+        // Set the result on the target.
+        //判断 result 成功与否，调用相应的方法
+        when (result) {
+            is SuccessResult -> onSuccess(result, targetDelegate, eventListener)
+            is ErrorResult -> onError(result, targetDelegate, eventListener)
+        }
+        return result
+    } catch (throwable: Throwable) {
+        if (throwable is CancellationException) {
+            onCancel(request, eventListener)
+            throw throwable
+        } else {
+            // Create the default error result if there's an uncaught exception.
+            val result = requestService.errorResult(request, throwable)
+            onError(result, targetDelegate, eventListener)
+            return result
+        }
+    } finally {
+        requestDelegate.complete()
     }
+}
 ```
 
 `executeChain`方法就比较有意思了，有看过 OkHttp 源码的同学应该会对 RealInterceptorChain 有点印象，OkHttp 的拦截器就是通过该同名类来实现的，很显然 Coil 借鉴了 OkHttp 的实现思路，极大方便了后续功能扩展，也给了外部控制整个图片加载流程的入口，可扩展性 +100
@@ -716,25 +702,25 @@ executeMain 方法的逻辑也比较简单，可以概括为：
 > 不了解 OkHttp 的 RealInterceptorChain 实现思路的可以看我的这篇文章，这里不再赘述：[三方库源码笔记（11）-OkHttp 源码详解](https://juejin.cn/post/6895369745445748749)
 
 ```kotlin
-	private val interceptors = registry.interceptors + EngineInterceptor(registry, bitmapPool, referenceCounter,
-        strongMemoryCache, memoryCacheService, requestService, systemCallbacks, drawableDecoder, logger)
+private val interceptors = registry.interceptors + EngineInterceptor(registry, bitmapPool, referenceCounter,
+    strongMemoryCache, memoryCacheService, requestService, systemCallbacks, drawableDecoder, logger)
 
-	private suspend inline fun executeChain(
-        request: ImageRequest,
-        type: Int,
-        size: Size,
-        cached: Bitmap?,
-        eventListener: EventListener
-    ): ImageResult {
-        val chain = RealInterceptorChain(request, type, interceptors, 0, request, size, cached, eventListener)
-        return if (launchInterceptorChainOnMainThread) {
+private suspend inline fun executeChain(
+    request: ImageRequest,
+    type: Int,
+    size: Size,
+    cached: Bitmap?,
+    eventListener: EventListener
+): ImageResult {
+    val chain = RealInterceptorChain(request, type, interceptors, 0, request, size, cached, eventListener)
+    return if (launchInterceptorChainOnMainThread) {
+        chain.proceed(request)
+    } else {
+        withContext(request.dispatcher) {
             chain.proceed(request)
-        } else {
-            withContext(request.dispatcher) {
-                chain.proceed(request)
-            }
         }
     }
+}
 ```
 
 所以说，重点就还是要来看 EngineInterceptor 的 `intercept` 方法，其逻辑可以概括为：
@@ -922,19 +908,19 @@ internal class EngineInterceptor(
 Fetcher 是**根据图片来源地址转换为目标数据类型**的转换器。Coil 默认提供了以下八种类型的 Fetcher，分别用于处理 **HttpUri、HttpUrl、File、Asset、ContentUri、Resource、Drawable、Bitmap** 等类型的图片来源地址
 
 ```kotlin
-    private val registry = componentRegistry.newBuilder()
-		···
-        // Fetchers
-        .add(HttpUriFetcher(callFactory))
-        .add(HttpUrlFetcher(callFactory))
-        .add(FileFetcher(addLastModifiedToFileCacheKey))
-        .add(AssetUriFetcher(context))
-        .add(ContentUriFetcher(context))
-        .add(ResourceUriFetcher(context, drawableDecoder))
-        .add(DrawableFetcher(drawableDecoder))
-        .add(BitmapFetcher())
-		···
-        .build()
+private val registry = componentRegistry.newBuilder()
+    ···
+    // Fetchers
+    .add(HttpUriFetcher(callFactory))
+    .add(HttpUrlFetcher(callFactory))
+    .add(FileFetcher(addLastModifiedToFileCacheKey))
+    .add(AssetUriFetcher(context))
+    .add(ContentUriFetcher(context))
+    .add(ResourceUriFetcher(context, drawableDecoder))
+    .add(DrawableFetcher(drawableDecoder))
+    .add(BitmapFetcher())
+    ···
+    .build()
 ```
 
 所以，如果我们外部要加载的是一张网络图片，且传入的是 String 类型的 ImageUrl，那么最终对应上的就是 HttpUriFetcher，其父类 HttpFetcher 就会通过 OkHttp 来进行网络请求了。至此，整个图片加载流程就结束了
@@ -1005,12 +991,12 @@ internal abstract class HttpFetcher<T : Any>(private val callFactory: Call.Facto
 Glide 的缓存机制是分为**内存缓存**和**磁盘缓存**两层，Coil 在这两个的基础上还增加了**网络缓存**这一层，这可以从 ImageRequest 的参数看出来，默认情况下，这三层缓存机制是全部启用的，即全部可读可写
 
 ```kotlin
-    //内存缓存
-    val memoryCachePolicy: CachePolicy,
-    //磁盘缓存
-    val diskCachePolicy: CachePolicy,
-    //网络缓存
-    val networkCachePolicy: CachePolicy,
+//内存缓存
+val memoryCachePolicy: CachePolicy,
+//磁盘缓存
+val diskCachePolicy: CachePolicy,
+//网络缓存
+val networkCachePolicy: CachePolicy,
 ```
 
 ```kotlin
@@ -1028,11 +1014,11 @@ enum class CachePolicy(
 在请求图片的时候，我们可以在 lambda 块中配置本次请求的缓存策略
 
 ```kotlin
-            imageView.load(imageUrl) {
-                memoryCachePolicy(CachePolicy.ENABLED)
-                diskCachePolicy(CachePolicy.ENABLED)
-                networkCachePolicy(CachePolicy.ENABLED)
-            }
+imageView.load(imageUrl) {
+    memoryCachePolicy(CachePolicy.ENABLED)
+    diskCachePolicy(CachePolicy.ENABLED)
+    networkCachePolicy(CachePolicy.ENABLED)
+}
 ```
 
 下面来看看 Coil 的缓存机制具体是如何定义和实现的
@@ -1139,11 +1125,11 @@ Coil 的内存缓存机制实际上是分为两级：
 Coil 的**磁盘缓存**和**网络缓存**可以合在一起讲，因为 Coil 的磁盘缓存其实是通过 OkHttp 本身的网络缓存功能来间接实现的。RealImageLoader 在初始化的时候，默认构建了一个包含 cache 的 OkHttpClient，即默认支持缓存网络请求结果
 
 ```kotlin
-        private fun buildDefaultCallFactory() = lazyCallFactory {
-            OkHttpClient.Builder()
-                .cache(CoilUtils.createDefaultCache(applicationContext))
-                .build()
-        }
+private fun buildDefaultCallFactory() = lazyCallFactory {
+    OkHttpClient.Builder()
+        .cache(CoilUtils.createDefaultCache(applicationContext))
+        .build()
+}
 ```
 
 而且，Coil 的磁盘缓存和网络缓存这两个配置也只会在 HttpFetcher 这里读取，即只在进行网络请求的时候生效，所以说，Coil **只会磁盘缓存通过网络请求得到的原始图片，而不缓存其它尺寸大小的图片**
@@ -1267,35 +1253,35 @@ internal class RequestService(private val logger: Logger?) {
 这个主要看 RealImageLoader 的 `executeMain` 方法。在发起图片加载请求前，后先创建 request 的代理对象 requestDelegate，requestDelegate 中就包含了对 Lifecycle 的处理逻辑。此外，如果是异步请求的话，会等到 Lifecycle 至少处于 Started 状态之后才能发起请求，这样当 Activity 还处于后台时就不会发起请求了
 
 ```kotlin
-	@MainThread
-    private suspend fun executeMain(initialRequest: ImageRequest, type: Int): ImageResult {
+@MainThread
+private suspend fun executeMain(initialRequest: ImageRequest, type: Int): ImageResult {
+    ···
+
+    //创建 request 的代理对象
+    val requestDelegate = delegateService.createRequestDelegate(request, targetDelegate, coroutineContext.job)
+
+    try {
         ···
-        
-        //创建 request 的代理对象
-        val requestDelegate = delegateService.createRequestDelegate(request, targetDelegate, coroutineContext.job)
 
-        try {
-            ···
+        //如果是异步请求的话，那么就需要等到 Lifecycle 至少处于 Started 状态之后才能继续执行
+        if (type == REQUEST_TYPE_ENQUEUE) request.lifecycle.awaitStarted()
 
-            //如果是异步请求的话，那么就需要等到 Lifecycle 至少处于 Started 状态之后才能继续执行
-            if (type == REQUEST_TYPE_ENQUEUE) request.lifecycle.awaitStarted()
-
-            ···
+        ···
+        return result
+    } catch (throwable: Throwable) {
+        if (throwable is CancellationException) {
+            onCancel(request, eventListener)
+            throw throwable
+        } else {
+            // Create the default error result if there's an uncaught exception.
+            val result = requestService.errorResult(request, throwable)
+            onError(result, targetDelegate, eventListener)
             return result
-        } catch (throwable: Throwable) {
-            if (throwable is CancellationException) {
-                onCancel(request, eventListener)
-                throw throwable
-            } else {
-                // Create the default error result if there's an uncaught exception.
-                val result = requestService.errorResult(request, throwable)
-                onError(result, targetDelegate, eventListener)
-                return result
-            }
-        } finally {
-            requestDelegate.complete()
         }
+    } finally {
+        requestDelegate.complete()
     }
+}
 ```
 
 `createRequestDelegate` 方法的逻辑可以总结为：
@@ -1307,44 +1293,44 @@ internal class RequestService(private val logger: Logger?) {
 2. 如果  target 对象不属于 ViewTarget 类型的话，创建的代理对象是 BaseRequestDelegate 类型，也会在收到 onDestroy 事件的时候主动取消 Job
 
 ```kotlin
-	/** Wrap [request] to automatically dispose (and for [ViewTarget]s restart) the [ImageRequest] based on its lifecycle. */
-    @MainThread
-    fun createRequestDelegate(
-        request: ImageRequest,
-        targetDelegate: TargetDelegate,
-        job: Job
-    ): RequestDelegate {
-        val lifecycle = request.lifecycle
-        val delegate: RequestDelegate
-        when (val target = request.target) {
-            //对应第1点
-            is ViewTarget<*> -> {
-                //对应第1.1点
-                delegate = ViewTargetRequestDelegate(imageLoader, request, targetDelegate, job)
-                lifecycle.addObserver(delegate)
+/** Wrap [request] to automatically dispose (and for [ViewTarget]s restart) the [ImageRequest] based on its lifecycle. */
+@MainThread
+fun createRequestDelegate(
+    request: ImageRequest,
+    targetDelegate: TargetDelegate,
+    job: Job
+): RequestDelegate {
+    val lifecycle = request.lifecycle
+    val delegate: RequestDelegate
+    when (val target = request.target) {
+        //对应第1点
+        is ViewTarget<*> -> {
+            //对应第1.1点
+            delegate = ViewTargetRequestDelegate(imageLoader, request, targetDelegate, job)
+            lifecycle.addObserver(delegate)
 
-                //对应第1.2点
-                if (target is LifecycleObserver) {
-                    lifecycle.removeObserver(target)
-                    lifecycle.addObserver(target)
-                }
-
-                target.view.requestManager.setCurrentRequest(delegate)
-
-                //对应第1.3点
-                // Call onViewDetachedFromWindow immediately if the view is already detached.
-                if (!target.view.isAttachedToWindowCompat) {
-                    target.view.requestManager.onViewDetachedFromWindow(target.view)
-                }
+            //对应第1.2点
+            if (target is LifecycleObserver) {
+                lifecycle.removeObserver(target)
+                lifecycle.addObserver(target)
             }
-            //对应第2点
-            else -> {
-                delegate = BaseRequestDelegate(lifecycle, job)
-                lifecycle.addObserver(delegate)
+
+            target.view.requestManager.setCurrentRequest(delegate)
+
+            //对应第1.3点
+            // Call onViewDetachedFromWindow immediately if the view is already detached.
+            if (!target.view.isAttachedToWindowCompat) {
+                target.view.requestManager.onViewDetachedFromWindow(target.view)
             }
         }
-        return delegate
+        //对应第2点
+        else -> {
+            delegate = BaseRequestDelegate(lifecycle, job)
+            lifecycle.addObserver(delegate)
+        }
     }
+    return delegate
+}
 ```
 
 # 十、Transformation
@@ -1389,9 +1375,8 @@ Coil 默认提供了以下几个 Transformation 实现类
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/11/22 11:32
- * @GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  * @Desc: 为图片添加水印
  */
 class WatermarkTransformation(
@@ -1432,14 +1417,14 @@ class WatermarkTransformation(
 ```
 
 ```kotlin
-            imageView.load(imageUrl) {
-                transformations(
-                    WatermarkTransformation("业志陈", Color.parseColor("#8D3700B3"), 120f)
-                )
-            }
+imageView.load(imageUrl) {
+    transformations(
+        WatermarkTransformation("业志陈", Color.parseColor("#8D3700B3"), 120f)
+    )
+}
 ```
 
-![](https://s3.ax1x.com/2020/11/22/D8EfC4.png)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0342c509ce3340a5b82a6e342c1b8916~tplv-k3u1fbpfcp-zoom-1.image)
 
 ## 2、为图片添加蒙层
 
@@ -1447,9 +1432,8 @@ Android 的 Paint 原生就支持为 Bitmap 添加一个蒙层，只需要使用
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/11/22 11:17
- * @GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  * @Desc: 添加蒙层
  */
 class ColorFilterTransformation(
@@ -1476,15 +1460,15 @@ class ColorFilterTransformation(
 ```
 
 ```kotlin
-            imageView.load(imageUrl) {
-                transformations(
-                    WatermarkTransformation("业志陈", Color.parseColor("#8D3700B3"), 120f),
-                    ColorFilterTransformation(Color.parseColor("#9CF44336"))
-                )
-            }
+imageView.load(imageUrl) {
+    transformations(
+        WatermarkTransformation("业志陈", Color.parseColor("#8D3700B3"), 120f),
+        ColorFilterTransformation(Color.parseColor("#9CF44336"))
+    )
+}
 ```
 
-![](https://s3.ax1x.com/2020/11/22/D8ZuSH.png)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e4417b3a98bc44258e0fe9395e73dc4e~tplv-k3u1fbpfcp-zoom-1.image)
 
 更多 Transformation 效果看这里：[coil-transformations](https://github.com/Commit451/coil-transformations)
 
@@ -1555,9 +1539,8 @@ object Coil {
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/11/22 13:06
- * @GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  * @Desc:
  */
 object CoilHolder {
@@ -1709,9 +1692,8 @@ internal class EngineInterceptor(
 
 ```kotlin
 /**
- * @Author: leavesC
- * @Date: 2020/11/22 13:52
- * @GitHub：https://github.com/leavesC
+ * @Author: leavesCZY
+ * @Github：https://github.com/leavesCZY
  * @Desc:
  */
 class VolleyFetcher(private val application: Application) : Fetcher<Uri> {
@@ -1764,24 +1746,24 @@ class VolleyFetcher(private val application: Application) : Fetcher<Uri> {
 然后为 ImageLoader 注册该 Fetcher 即可
 
 ```kotlin
-    fun init(application: Application) {
-        val okHttpClient = createOkHttp(application)
-        Coil.setImageLoader(
-            ImageLoader.Builder(application)
-                .placeholder(ActivityCompat.getDrawable(application, R.drawable.icon_loading))
-                .error(ActivityCompat.getDrawable(application, R.drawable.icon_error))
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .callFactory(okHttpClient)
-                .componentRegistry(
-                    ComponentRegistry.Builder()
-                        .add(VolleyFetcher(application))
-                        .add(OkHttpFetcher(okHttpClient)).build()
-                )
-                .build()
-        )
-    }
+fun init(application: Application) {
+    val okHttpClient = createOkHttp(application)
+    Coil.setImageLoader(
+        ImageLoader.Builder(application)
+            .placeholder(ActivityCompat.getDrawable(application, R.drawable.icon_loading))
+            .error(ActivityCompat.getDrawable(application, R.drawable.icon_error))
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .callFactory(okHttpClient)
+            .componentRegistry(
+                ComponentRegistry.Builder()
+                    .add(VolleyFetcher(application))
+                    .add(OkHttpFetcher(okHttpClient)).build()
+            )
+            .build()
+    )
+}
 ```
 
 # 十三、GitHub
 
-上述的所有示例代码我都放到 GitHub 了，欢迎 star：[AndroidOpenSourceDemo](https://github.com/leavesC/AndroidOpenSourceDemo)
+上述的所有示例代码我都放到 GitHub 了，欢迎 star：[AndroidOpenSourceDemo](https://github.com/leavesCZY/AndroidOpenSourceDemo)

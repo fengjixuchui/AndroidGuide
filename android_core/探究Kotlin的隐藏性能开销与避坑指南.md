@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -60,19 +60,19 @@ open class MyTextView @JvmOverloads constructor(
 ```
 
 ```xml
-    <github.leavesc.demo.MyTextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="业志陈"
-        android:textSize="42sp" />
+<github.leavesc.demo.MyTextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:text="业志陈"
+    android:textSize="42sp" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="业志陈"
-        android:textSize="42sp" />
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:text="业志陈"
+    android:textSize="42sp" />
 ```
 
 此时两个 TextView 就会呈现出不一样的文本颜色了，十分神奇
@@ -246,34 +246,33 @@ fun main() {
 如果我们是以直接传递若干个入参参数的形式来调用 `printValue` 方法的话，Kotlin 会自动将这些参数打包为一个数组进行传递，这里面就包含着创建数组的开销，这方面和 Java 保持一致。 如果我们传入的参数就已经是数组的话，Kotlin 相比 Java 就存在着一个隐藏开销，Kotlin 会复制现有数组作为参数拿来使用，相当于多分配了额外的数组空间，这可以从反编译后的 Java 代码看出来
 
 ```java
-   public static final void printValue(@NotNull int... values) {
-      Intrinsics.checkNotNullParameter(values, "values");
-      int $i$f$forEach = false;
-      int[] var3 = values;
-      int var4 = values.length;
+public static final void printValue(@NotNull int... values) {
+  	Intrinsics.checkNotNullParameter(values, "values");
+  	int $i$f$forEach = false;
+  	int[] var3 = values;
+  	int var4 = values.length;
 
-      for(int var5 = 0; var5 < var4; ++var5) {
-         int element$iv = var3[var5];
-         int var8 = false;
-         boolean var9 = false;
-         System.out.println(element$iv);
-      }
+  	for(int var5 = 0; var5 < var4; ++var5) {
+     	int element$iv = var3[var5];
+     	int var8 = false;
+     	boolean var9 = false;
+     	System.out.println(element$iv);
+  	}
+}
 
-   }
+public static final void main() {
+  	printValue();
+  	printValue(1);
+  	printValue(2, 3);
+  	int[] values = new int[]{4, 5, 6};
+  	//复制后再进行调用
+  	printValue(Arrays.copyOf(values, values.length));
+}
 
-   public static final void main() {
-      printValue();
-      printValue(1);
-      printValue(2, 3);
-      int[] values = new int[]{4, 5, 6};
-      //复制后再进行调用
-      printValue(Arrays.copyOf(values, values.length));
-   }
-
-   // $FF: synthetic method
-   public static void main(String[] var0) {
-      main();
-   }
+// $FF: synthetic method
+public static void main(String[] var0) {
+  	main();
+}
 ```
 
 可以看到 Kotlin 会通过 `Arrays.copyOf` 复制现有数组，将复制后的数组作为参数进行调用，这样做的好处就是可以避免 `printValue` 方法影响到原有数组，坏处就是会额外消耗多一份的内存空间
@@ -406,10 +405,10 @@ lambda 表达式语法虽然方便，但也隐藏着两个性能问题：
 将以上代码反编译为 Java 代码后，可以看到 callback 最终的实际类型就是 Function2，每次调用`requestHttp` 方法就相当于是在创建一个 Function2 变量
 
 ```java
-   public static final void requestHttp(@NotNull Function2 callback) {
-      Intrinsics.checkNotNullParameter(callback, "callback");
-      callback.invoke(200, "success");
-   }
+public static final void requestHttp(@NotNull Function2 callback) {
+	Intrinsics.checkNotNullParameter(callback, "callback");
+	callback.invoke(200, "success");
+}
 ```
 
 Function2 是 Kotlin 提供的一个的泛型接口，数字 2 即代表其包含两个入参值
@@ -443,14 +442,14 @@ fun main() {
 ```
 
 ```java
-   public static final void main() {
-      String data = "success";
-      int code = 200;
-      String var4 = "code: " + code;
-      System.out.println(var4);
-      var4 = "data: " + data;
-      System.out.println(var4);
-   }
+public static final void main() {
+	String data = "success";
+	int code = 200;
+	String var4 = "code: " + code;
+	System.out.println(var4);
+	var4 = "data: " + data;
+	System.out.println(var4);
+}
 ```
 
 通过内联函数，可以使得编译器直接在调用方中使用内联函数体中的代码，相当于直接把内联函数中的逻辑复制到了调用方中，完全避免了调用带来的开销。对于高阶函数，作为参数传递的 lambda 表达式的主体也将被内联，这使得：
@@ -576,9 +575,9 @@ Exception in thread "main" java.lang.NullPointerException: Parameter specified a
 将`printMsg`反编译为 Java 方法，可以发现方法内部会对入参进行空校验，当发现为 null 时就会直接抛出 NPE。这个比较好理解，毕竟 Kotlin 的类型系统会严格区分 **可 null** 和 **不可为 null** 两种类型，其区分手段之一就是会自动在我们的代码里插入一些类型校验逻辑，即自动加上了非空断言，当发现不可为 null 的参数传入了 null 的话就会马上抛出 NPE，即使我们并没有使用到该参数
 
 ```java
-   public static final void printMsg(@NotNull String msg) {
-      Intrinsics.checkNotNullParameter(msg, "msg");
-   }
+public static final void printMsg(@NotNull String msg) {
+	Intrinsics.checkNotNullParameter(msg, "msg");
+}
 ```
 
 那既然 UserBean 中的 userName 字段已经被声明为非 null 类型了，那么为什么还可以反序列化成功呢？按照我自己的第一直觉，应该在进行反序列的时候就直接抛出异常才对

@@ -1,4 +1,4 @@
-> 公众号：[字节数组](https://upload-images.jianshu.io/upload_images/2552605-57915be42c4f6a82.jpg)
+> 公众号：[字节数组](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image)
 >
 > 希望对你有所帮助 🤣🤣
 
@@ -88,8 +88,8 @@ px = dp * (dpi / 160)
 在布局文件中声明的 dp 值，最终都需要通过 TypedValue 的 applyDimension 方法来转换为 px，转换公式即：density * dp
 
 ```java
-    public static float applyDimension(int unit, float value, DisplayMetrics metrics) {
-        switch (unit) {
+public static float applyDimension(int unit, float value, DisplayMetrics metrics) {
+    switch (unit) {
         case COMPLEX_UNIT_PX:
             return value;
         case COMPLEX_UNIT_DIP:
@@ -102,9 +102,9 @@ px = dp * (dpi / 160)
             return value * metrics.xdpi;
         case COMPLEX_UNIT_MM:
             return value * metrics.xdpi * (1.0f/25.4f);
-        }
-        return 0;
     }
+    return 0;
+}
 ```
 
 那么，如果我们能够动态修改 density 值的大小，要求修改后计算出的屏幕宽度就等于设计稿的宽度，不就可以在布局文件中直接使用设计稿给出的各个 dp 宽高值，且使得 View 在不同手机屏幕上都能占据同样的比例吗？
@@ -126,21 +126,21 @@ px = dp * (dpi / 160)
 实际上 density 只是 DisplayMetrics 类中的一个 public 变量，不涉及任何私有 API，修改后理论上也不会影响到应用的稳定性。因此，只要我们在 Activity 的 onCreate 方法中完成对 density 和 densityDpi 的修改，我们就可以在布局文件中直接使用设计稿给出的 dp 值，不用准备多套 dimens 就能完成适配，十分简洁
 
 ```kotlin
-    fun setCustomDensity(activity: Activity, application: Application, designWidthDp: Int) {
-        val appDisplayMetrics = application.resources.displayMetrics
-        val targetDensity = 1.0f * appDisplayMetrics.widthPixels / designWidthDp
-        val targetDensityDpi = (targetDensity * 160).toInt()
-        appDisplayMetrics.density = targetDensity
-        appDisplayMetrics.densityDpi = targetDensityDpi
-        val activityDisplayMetrics = activity.resources.displayMetrics
-        activityDisplayMetrics.density = targetDensity
-        activityDisplayMetrics.densityDpi = targetDensityDpi
-    }
+fun setCustomDensity(activity: Activity, application: Application, designWidthDp: Int) {
+    val appDisplayMetrics = application.resources.displayMetrics
+    val targetDensity = 1.0f * appDisplayMetrics.widthPixels / designWidthDp
+    val targetDensityDpi = (targetDensity * 160).toInt()
+    appDisplayMetrics.density = targetDensity
+    appDisplayMetrics.densityDpi = targetDensityDpi
+    val activityDisplayMetrics = activity.resources.displayMetrics
+    activityDisplayMetrics.density = targetDensity
+    activityDisplayMetrics.densityDpi = targetDensityDpi
+}
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        setCustomDensity(this, application, 420)
-        super.onCreate(savedInstanceState)
-    }
+override fun onCreate(savedInstanceState: Bundle?) {
+    setCustomDensity(this, application, 420)
+    super.onCreate(savedInstanceState)
+}
 ```
 
 > 字节跳动技术团队的文章只给出了示例代码，并没有给出最终落地可用的代码，但在 GitHub 上有一个挺出名的落地实践库，读者值得一看：[AndroidAutoSize](https://github.com/JessYanCoding/AndroidAutoSize)
@@ -270,8 +270,8 @@ smallestWidth 方案和宽高限定符方案最大的差别就在于容错率，
 
 此外，我看到网络上很多开发者都在说 **dpi 的存在就是为了让大屏幕手机能够显示更多内容，屏幕适配导致 dpi 失去了其原有的意义**，但我其实并不理解这和屏幕适配有什么关系。现在的现实背景就是存在某些屏幕像素宽度相同的手机，其 dpi 却不一样，如果单纯直接使用 dp 而不进行额外适配的话，那在这类机型下控件就会相比设计稿多出一些空白或者是超出屏幕范围，这是开发者不得不解决的问题。如果说**显示更多内容**指的是让控件在大屏幕手机上能够占据更多的物理空间，那么前提也是要让各个控件的大小和位置都符合设计稿的要求，屏幕适配要做到的就是这一点，同等比例下控件在大屏幕手机上自然就会有更多物理空间。而如果说**显示更多内容**指的是当在大屏幕手机上有剩余空间时就相比小屏幕多显示其它控件，那么我觉得不仅开发要疯，设计师都要疯……
 
-最后，这里再提供一份用于生成 dimens 文件的代码，基于 smallestWidth 方案，代码总的不到一百行，实现思路在前文讲的很清楚了。仅需要填入设计稿的宽高像素大小就可以，默认基于 1080 x 1920 px 的设计稿，生成范围从 320 到 460 dp 之间，步长 10 dp，读者可以按需调整
+最后，这里再提供一份用于生成 dimens 文件的代码，基于 smallestWidth 方案，代码总的不到一百行，实现思路在前文讲的很清楚了。支持以 dp 或者 px 作为引用单位，按需填入设计稿的 dp 宽高或者 px 宽高，将 src-dp 或者 src-px 文件夹内的 dimens 文件复制到你的项目中即可
 
-![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f8e031bc52e24e08b19e25479aaeed7b~tplv-k3u1fbpfcp-watermark.image)
+![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d3fa751bcad6489d8f76bb701ab9edc4~tplv-k3u1fbpfcp-zoom-1.image)
 
-有需要的同学自取：[SmallestWidthGenerator](https://github.com/leavesC/SmallestWidthGenerator)
+有需要的同学自取：[SmallestWidthGenerator](https://github.com/leavesCZY/SmallestWidthGenerator)
