@@ -2,19 +2,41 @@
 
 <p align="center">🎁🎁🎁 这是一份给 Android Developer 的进阶不完整指南，喜欢写又长又臭的文章，希望对你有所帮助 🤣🤣🤣</p>
 
-<p align="center">原创不易，欢迎关注公众号：<b>字节数组</b></p>
+<p align="center">原创不易，欢迎关注公众号，第一时间看最新文章</p>
 
-<p align="center">第一时间看最新文章</p>
+# <p align="center">字节数组</p>
 
 <div align=center><img src ="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/adbc507fc3704fd8955aae739a433db2~tplv-k3u1fbpfcp-zoom-1.image"/></div>
 
 
+- Jetpack Compose
+  * [Jetpack Compose 实现完美屏幕适配](https://juejin.cn/post/7113953940282015758)
+  * [Jetpack Compose 实现一个图片选择框架](https://juejin.cn/post/7108420791502372895)
+  * [不止 Android，Compose Multiplatform 初探](https://juejin.cn/post/7062533562460799013)
+  * [随便嵌套？Jetpack Compose 到底优秀在哪里](https://juejin.cn/post/7070158120831418381)  
+  * [分享一个用 Jetpack Compose 实现的 IM App](https://juejin.cn/post/7098747961537986597)  
+  * [学不动也要学，Jetpack Compose 写一个 IM APP（一）](https://juejin.cn/post/6991429231821684773)
+  * [学不动也要学，Jetpack Compose 写一个 IM APP（二）](https://juejin.cn/post/7028397244894330917)
+  * [学不动也要学，Jetpack Compose 玩一把俄罗斯方块](https://juejin.cn/post/6974585048762679310)
+  * [学不动也要学，Jetpack Compose 实现自定义绘制](https://juejin.cn/post/6996568363581308959)
+  * [用 Jetpack Compose 写一个 BottomSheetDialog](https://juejin.cn/post/7151792921698631717)   
+
+
+- Flutter
+  * [Dart 入门教程](https://juejin.cn/post/6844903937342963719)
+  * [FlutterDo - 入门实例教程](https://github.com/leavesCZY/flutter_do)
+  * [Flutter 实战：用贝塞尔曲线画一个波浪球](https://juejin.cn/post/7098329401707724814)
+
+
+- 字节码插桩
+  * [ASM 字节码插桩：从 Lambda 表达式讲起](https://juejin.cn/post/7151798531672506398)
+  * [ASM 字节码插桩：实现双击防抖](https://juejin.cn/post/7042328862872567838)
+  * [ASM 字节码插桩：进行线程整治](https://juejin.cn/post/7043999874076901406)
+  * [ASM 字节码插桩：助力隐私合规](https://juejin.cn/post/7046207125785149448)
+  * [ASM 字节码插桩：监控大图加载](https://juejin.cn/post/7074970389188706318)
+
+
 - 精讲
-  * [Android WebView H5 秒开方案总结](https://juejin.cn/post/7016883220025180191)
-  * [探究 Bitmap 的优化手段](https://juejin.cn/post/6952429810207424526)
-  * [Coil 和 Glide 的 Bitmap 缓存复用机制](https://juejin.cn/post/6956090846470995975)
-  * [聊聊 Context 的一些知识点](https://juejin.cn/post/6966223613057826852)
-  * [一步步封装实现自己的网络请求框架 3.0](https://juejin.cn/post/6932650811642085389)
   * [一文读懂 Android 主流屏幕适配方案](https://juejin.cn/post/6999445137491230728)
   * [一文读懂 Activity 的启动模式](https://juejin.cn/post/6952886121328345101)
   * [一文读懂 Fragment 的方方面面](https://juejin.cn/post/7006970844542926855)
@@ -24,6 +46,13 @@
   * [一文快速入门 Dagger2](https://github.com/leavesCZY/Dagger2Samples)
   * [一文快速入门 DataBinding](https://github.com/leavesCZY/DataBindingSamples)
   * [一文快速入门 APT](https://juejin.cn/post/6844903753108160525)
+  * [一步步封装实现自己的网络请求框架 3.0](https://juejin.cn/post/6932650811642085389)
+  * [Android WebView H5 秒开方案总结](https://juejin.cn/post/7016883220025180191)
+  * [Coil 和 Glide 的 Bitmap 缓存复用机制](https://juejin.cn/post/6956090846470995975)  
+  * [探究 Bitmap 的优化手段](https://juejin.cn/post/6952429810207424526)
+  * [聊聊 Context 的一些知识点](https://juejin.cn/post/6966223613057826852)  
+  * [通过 Android 设备的 Wifi Direct，实现 Android 手机之间传输任意文件](https://github.com/leavesCZY/WifiP2P)
+  * [通过 Android 设备的 Wifi 个人热点，实现 Android 手机之间传输任意文件](https://github.com/leavesCZY/WifiFileTransfer)  
 
 
 - Kotlin
@@ -43,13 +72,16 @@
   * [Kotlin 协程（九）- 选择表达式](https://juejin.cn/post/6844904106788667400)
 
 
-- 字节码插桩
-  * [ASM 字节码插桩：实现双击防抖](https://juejin.cn/post/7042328862872567838)
-  * [ASM 字节码插桩：进行线程整治](https://juejin.cn/post/7043999874076901406)
-  * [ASM 字节码插桩：助力隐私合规](https://juejin.cn/post/7046207125785149448)
-  * [ASM 字节码插桩：监控大图加载](https://juejin.cn/post/7074970389188706318)
+- 系统源码分析
+  * [一文读懂 Handler 机制](https://juejin.cn/post/6901682664617705485)
+  * [一文读懂 SharedPreferences 的缺陷及一点点思考](https://juejin.cn/post/6932277268110639112)
+  * [一文读懂 View 的 Measure、Layout、Draw 流程](https://juejin.cn/post/6939540905581887502)
+  * [一文读懂 View 事件分发机制](https://juejin.cn/post/6931914294980411406)
+  * [一文读懂 View & Window 机制](https://juejin.cn/post/6942303848996274213)
+  * [一文读懂 View Post 的原理及缺陷](https://juejin.cn/post/6939763855216082974)
 
-- Jetpack
+
+- Jetpack 源码分析
   * [Jetpack LiveData 的设计理念及改进](https://juejin.cn/post/6903096576734920717)
   * [从源码看 Jetpack（一）- Lifecycle 源码详解](https://juejin.cn/post/6847902220755992589)
   * [从源码看 Jetpack（二）- Lifecycle 衍生物源码详解](https://juejin.cn/post/6847902220760203277)
@@ -60,31 +92,7 @@
   * [从源码看 Jetpack（七）- SavedStateHandle 源码详解](https://juejin.cn/post/6874136956347875342)
 
 
-- Jetpack Compose
-  * [不止 Android，Compose Multiplatform 初探](https://juejin.cn/post/7062533562460799013)
-  * [随便嵌套？Jetpack Compose 到底优秀在哪里](https://juejin.cn/post/7070158120831418381)
-  * [学不动也要学，Jetpack Compose 写一个 IM APP（一）](https://juejin.cn/post/6991429231821684773)
-  * [学不动也要学，Jetpack Compose 写一个 IM APP（二）](https://juejin.cn/post/7028397244894330917)
-  * [学不动也要学，Jetpack Compose 玩一把俄罗斯方块](https://juejin.cn/post/6974585048762679310)
-  * [学不动也要学，Jetpack Compose 实现自定义绘制](https://juejin.cn/post/6996568363581308959)
-
-
-- Flutter
-  * [Dart 入门教程](https://juejin.cn/post/6844903937342963719)
-  * [FlutterDo - 入门实例教程](https://github.com/leavesCZY/flutter_do)
-  * [Flutter 实战，贝塞尔曲线画一个波浪 Widget](https://juejin.cn/post/6844903981790019592)
-
-
-- 系统源码
-  * [一文读懂 Handler 机制](https://juejin.cn/post/6901682664617705485)
-  * [一文读懂 SharedPreferences 的缺陷及一点点思考](https://juejin.cn/post/6932277268110639112)
-  * [一文读懂 View 的 Measure、Layout、Draw 流程](https://juejin.cn/post/6939540905581887502)
-  * [一文读懂 View 事件分发机制](https://juejin.cn/post/6931914294980411406)
-  * [一文读懂 View & Window 机制](https://juejin.cn/post/6942303848996274213)
-  * [一文读懂 View Post 的原理及缺陷](https://juejin.cn/post/6939763855216082974) 
-
-
-- 主流开源库源码分析
+- 开源库源码分析
   - [Android 主流开源库源码分析（一）- EventBus 源码详解](https://juejin.cn/post/6881265680465788936)
   - [Android 主流开源库源码分析（二）- EventBus 自己实现一个](https://juejin.cn/post/6881808026647396366)
   - [Android 主流开源库源码分析（三）- ARouter 源码详解](https://juejin.cn/post/6882553066285957134)
